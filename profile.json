@@ -1,0 +1,74 @@
+{
+    "name": "Rinah",
+    "facts": {
+        "i like pizza": "True",
+        "favourite colour": "red",
+        "favourite country": "korea",
+        "likes dancing": "True",
+        "birthday": "23 October",
+        "that the moon has a lower gravity than the Earth": "True",
+        "that my favourite animal": "a fox",
+        "that your favourite animal": "a cat",
+        "reason for learning korean": "i find the remembering hard",
+        "thoughts about learning korean": "im fdsferhbfehbf korean",
+        "progress learning korean": "it is hard",
+        "reason for learning watching a new kdrama": "i like korean things"
+    },
+    "personal": {
+        "age": "12",
+        "birthday": "",
+        "gender": "",
+        "school": ""
+    },
+    "preferences": {
+        "likes": [
+            "pizza",
+            "dancing and preforming"
+        ],
+        "dislikes": [
+            "spiders",
+            "tomatoes"
+        ],
+        "favourites": {
+            "colour": "deep red",
+            "animal": "a fox"
+        },
+        "hobbies": [
+            "korean",
+            "chinese",
+            "it",
+            "watching a new kdrama"
+        ]
+    },
+    "habits": {},
+    "events": [
+        {
+            "description": "went hiking today",
+            "date_label": "today",
+            "created_at": "2026-08-01T20:17:50"
+        },
+        {
+            "description": "went on a walk today",
+            "date_label": "today",
+            "created_at": "2026-08-01T20:52:46"
+        },
+        {
+            "description": "felt tired: im learning korean",
+            "date_label": "today",
+            "created_at": "2026-08-02T11:34:02"
+        },
+        {
+            "description": "felt tired because: tired tired",
+            "date_label": "today",
+            "created_at": "2026-08-02T11:47:18"
+        }
+    ],
+    "goals": [],
+    "projects": [],
+    "relationships": {
+        "siblings": [],
+        "family": [],
+        "friends": [],
+        "pets": []
+    }
+}

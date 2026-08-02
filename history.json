@@ -1,0 +1,1200 @@
+[
+    {
+        "user": "my hobbies are singing and dancing",
+        "nova": "I'm still learning. Try asking me something else!"
+    },
+    {
+        "user": "what are my hobbies",
+        "nova": "I'm not sure how to answer that yet."
+    },
+    {
+        "user": "fkhgukfdhgksjd",
+        "nova": "I don't know that yet, but I'll be able to learn more soon."
+    },
+    {
+        "user": "Helllllllo",
+        "nova": "I'm still learning. Try asking me something else!"
+    },
+    {
+        "user": "what do you know",
+        "nova": "I'm not sure how to answer that yet."
+    },
+    {
+        "user": "i amd 13 years old",
+        "nova": "I'll remember that you're d 13 years old."
+    },
+    {
+        "user": "i am 12 years old",
+        "nova": "I'll remember that you're 12 years old."
+    },
+    {
+        "user": "what do you know about me",
+        "nova": "Here's what I know:\n\nName: Rinah\ni like pizza: True\nfavourite colour: red\nfavourite country: korea\nlikes dancing: True\nbirthday: 23 October\nthat the moon has a lower gravity than the Earth: True\nthat my favourite animal: a fox\nthat your favourite animal: a cat"
+    },
+    {
+        "user": "what is your name",
+        "nova": "I'm NOVA."
+    },
+    {
+        "user": "hi",
+        "nova": "Hii, Rinah! Doing anything fun?"
+    },
+    {
+        "timestamp": "2026-08-01T19:48:10",
+        "user": "hi",
+        "nova": "Hii, Rinah! Doing anything fun?"
+    },
+    {
+        "timestamp": "2026-08-01T19:48:14",
+        "user": "what is my name",
+        "nova": "Your name is Rinah."
+    },
+    {
+        "timestamp": "2026-08-01T19:48:17",
+        "user": "hi",
+        "nova": "Welcome back, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-01T19:48:23",
+        "user": "exit",
+        "nova": "I don't know that yet, but I'll be able to learn more soon."
+    },
+    {
+        "timestamp": "2026-08-01T20:17:50",
+        "user": "i went hiking today",
+        "nova": "That sounds fun. Was it a relaxing trip or a painful-leg kind of adventure?"
+    },
+    {
+        "timestamp": "2026-08-01T20:18:25",
+        "user": "painful-leg kind",
+        "nova": "I'm still learning. Try asking me something else!"
+    },
+    {
+        "timestamp": "2026-08-01T20:21:24",
+        "user": "i dislike vegetables",
+        "nova": "I'll remember that vegetables isn't for you. Was there a particular reason?"
+    },
+    {
+        "timestamp": "2026-08-01T20:22:08",
+        "user": "im learning",
+        "nova": "I'm not sure how to answer that yet."
+    },
+    {
+        "timestamp": "2026-08-01T20:22:18",
+        "user": "im learning korean",
+        "nova": "That sounds interesting. What made you choose korean?"
+    },
+    {
+        "timestamp": "2026-08-01T20:22:49",
+        "user": "its an interesting language from a country i like",
+        "nova": "I don't know that yet, but I'll be able to learn more soon."
+    },
+    {
+        "timestamp": "2026-08-01T20:23:08",
+        "user": "im tired",
+        "nova": "I don't know that yet, but I'll be able to learn more soon."
+    },
+    {
+        "timestamp": "2026-08-01T20:23:16",
+        "user": "i am tired",
+        "nova": "I'm not sure how to answer that yet."
+    },
+    {
+        "timestamp": "2026-08-01T20:23:22",
+        "user": "I am tired",
+        "nova": "I don't know that yet, but I'll be able to learn more soon."
+    },
+    {
+        "timestamp": "2026-08-01T20:36:07",
+        "user": "hi",
+        "nova": "hey, Rinah! Tell me something new about you"
+    },
+    {
+        "timestamp": "2026-08-01T20:36:37",
+        "user": "im learning korean",
+        "nova": "korean? That's exciting. I'll remember that one. What made you start?"
+    },
+    {
+        "timestamp": "2026-08-01T20:38:07",
+        "user": "it is an interesting lanuage and i like the country",
+        "nova": "That makes sense. Korean sounds meaningful to you, not just something random you decided to learn."
+    },
+    {
+        "timestamp": "2026-08-01T20:38:18",
+        "user": "thx",
+        "nova": "Hmm... I understand the words, but not quite what you need from me yet."
+    },
+    {
+        "timestamp": "2026-08-01T20:38:39",
+        "user": "im tired",
+        "nova": "Ah, tired tired\u2014or just mentally done with today?"
+    },
+    {
+        "timestamp": "2026-08-01T20:52:31",
+        "user": "hi",
+        "nova": "Hii, Rinah! Doing anything fun?"
+    },
+    {
+        "timestamp": "2026-08-01T20:52:46",
+        "user": "i went on a walk today",
+        "nova": "On a walk today? That sounds like a good day. I'll remember that one. Where did you go?"
+    },
+    {
+        "timestamp": "2026-08-01T20:52:54",
+        "user": "to the park",
+        "nova": "I'm not completely sure what to say to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-01T21:00:56",
+        "user": "im learning korean",
+        "nova": "korean? That's exciting. I'll remember that one. What made you start?"
+    },
+    {
+        "timestamp": "2026-08-01T21:01:10",
+        "user": "i like the country",
+        "nova": "That makes sense \u2014 it sounds like your interest in korean goes deeper than just learning words."
+    },
+    {
+        "timestamp": "2026-08-01T21:01:50",
+        "user": "im learning chinese",
+        "nova": "You're learning chinese now \u2014 that's staying with me. How is it going?"
+    },
+    {
+        "timestamp": "2026-08-01T21:02:10",
+        "user": "i went to the cinema",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-01T21:02:26",
+        "user": "what time is it",
+        "nova": "21:02:26"
+    },
+    {
+        "timestamp": "2026-08-01T21:02:49",
+        "user": "im tired",
+        "nova": "That doesn't sound fun. What's been draining your energy?"
+    },
+    {
+        "timestamp": "2026-08-01T21:03:05",
+        "user": "my favourite animal is a fox",
+        "nova": "a fox? Noted \u2014 but in a less robotic way. What do you like most about them?"
+    },
+    {
+        "timestamp": "2026-08-01T21:35:26",
+        "user": "hi",
+        "nova": "Hello, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-01T21:35:35",
+        "user": "im learning korean",
+        "nova": "Nice! I'll keep korean in mind. What has been the hardest part so far?"
+    },
+    {
+        "timestamp": "2026-08-01T21:36:00",
+        "user": "i find the remembering hard",
+        "nova": "That makes sense \u2014 your interest in korean goes deeper than just learning words."
+    },
+    {
+        "timestamp": "2026-08-01T21:36:39",
+        "user": "do i like vegetables",
+        "nova": "No \u2014 you told me you don't like vegetables."
+    },
+    {
+        "timestamp": "2026-08-01T21:36:52",
+        "user": "when is my birthday",
+        "nova": "Your birthday is 23 October 2013."
+    },
+    {
+        "timestamp": "2026-08-01T21:37:08",
+        "user": "forget my birthday",
+        "nova": "Okay. I've forgotten your birthday."
+    },
+    {
+        "timestamp": "2026-08-01T21:37:17",
+        "user": "when is my birthday",
+        "nova": "You haven't told me your birthday yet."
+    },
+    {
+        "timestamp": "2026-08-01T21:37:42",
+        "user": "forget i dislike vegetables",
+        "nova": "I've forgotten that you dislike vegetables."
+    },
+    {
+        "timestamp": "2026-08-01T21:37:50",
+        "user": "do i like vegetables",
+        "nova": "You haven't told me how you feel about vegetables yet."
+    },
+    {
+        "timestamp": "2026-08-01T21:38:08",
+        "user": "my favourite colour is purple",
+        "nova": "purple has officially taken over from now dark red. I'll remember that."
+    },
+    {
+        "timestamp": "2026-08-01T21:38:30",
+        "user": "actually my favourite colour is deep red",
+        "nova": "deep red has officially taken over from purple. I'll remember that."
+    },
+    {
+        "timestamp": "2026-08-01T21:49:17",
+        "user": "hii",
+        "nova": "hey, Rinah! Tell me something new about you"
+    },
+    {
+        "timestamp": "2026-08-01T21:49:49",
+        "user": "im learning korean",
+        "nova": "That sounds interesting. What made you choose korean?"
+    },
+    {
+        "timestamp": "2026-08-01T21:50:00",
+        "user": "the sound of it is nice",
+        "nova": "That makes sense. Learning korean can be difficult in different ways."
+    },
+    {
+        "timestamp": "2026-08-01T21:58:27",
+        "user": "im learning korean",
+        "nova": "Nice! I'll keep korean in mind. What has been the hardest part so far?"
+    },
+    {
+        "timestamp": "2026-08-01T21:58:40",
+        "user": "remembering the words",
+        "nova": "That makes sense. Learning korean can be difficult in different ways."
+    },
+    {
+        "timestamp": "2026-08-01T21:59:00",
+        "user": "im learning korean",
+        "nova": "Nice! I'll keep korean in mind. What has been the hardest part so far?"
+    },
+    {
+        "timestamp": "2026-08-01T21:59:08",
+        "user": "im learning korean",
+        "nova": "I get that. That sounds like one of the harder parts of learning korean."
+    },
+    {
+        "timestamp": "2026-08-01T21:59:19",
+        "user": "im learning korean",
+        "nova": "korean? That's exciting. I'll remember that one. What made you start?"
+    },
+    {
+        "timestamp": "2026-08-01T21:59:29",
+        "user": "i think it sounds nice",
+        "nova": "Yeah, that can be tricky. I'll keep that in mind."
+    },
+    {
+        "timestamp": "2026-08-01T21:59:49",
+        "user": "im learning korean",
+        "nova": "Nice! I'll keep korean in mind. What has been the hardest part so far?"
+    },
+    {
+        "timestamp": "2026-08-01T22:00:06",
+        "user": "im fdsferhbfehbf korean",
+        "nova": "Yeah, that can be tricky. I'll keep that in mind."
+    },
+    {
+        "timestamp": "2026-08-01T22:09:53",
+        "user": "im learning korean",
+        "nova": "Yes, I know you're learning korean."
+    },
+    {
+        "timestamp": "2026-08-01T22:10:04",
+        "user": "im learning it",
+        "nova": "You're learning it now \u2014 that's staying with me."
+    },
+    {
+        "timestamp": "2026-08-01T22:10:14",
+        "user": "im learning korean",
+        "nova": "korean is already safely in my memory."
+    },
+    {
+        "timestamp": "2026-08-01T22:26:45",
+        "user": "forget that i went hiking today",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-01T22:26:56",
+        "user": "what do you know about me",
+        "nova": "Here's what I know:\n\nName: Rinah\nAge: 12\nLikes: pizza, dancing and preforming\nDislikes: spiders, tomatoes\nHobbies: korean, chinese, it\nFavourite colour: deep red\nFavourite animal: a fox"
+    },
+    {
+        "timestamp": "2026-08-01T22:27:15",
+        "user": "tell me about yourself",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-01T22:27:20",
+        "user": "you are nova",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-01T22:27:26",
+        "user": "who are you",
+        "nova": "I'm NOVA."
+    },
+    {
+        "timestamp": "2026-08-01T22:27:30",
+        "user": "what is your name",
+        "nova": "I'm NOVA."
+    },
+    {
+        "timestamp": "2026-08-01T22:27:42",
+        "user": "what is i am nova?",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-01T22:29:16",
+        "user": "im learning korean",
+        "nova": "I remember you're learning Korean. How has it been going lately?"
+    },
+    {
+        "timestamp": "2026-08-01T22:29:42",
+        "user": "it is hard",
+        "nova": "That gives me a better idea of how learning korean is going."
+    },
+    {
+        "timestamp": "2026-08-01T22:31:59",
+        "user": "i read a book",
+        "nova": "Hmm... I'm still figuring out messages like that."
+    },
+    {
+        "timestamp": "2026-08-01T22:43:59",
+        "user": "how are you",
+        "nova": "I'm here, curious, and ready to talk. How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-01T22:44:16",
+        "user": "are you nova",
+        "nova": "I am."
+    },
+    {
+        "timestamp": "2026-08-01T22:44:28",
+        "user": "do you ever get tired",
+        "nova": "I don't experience tiredness, but I can understand when you do."
+    },
+    {
+        "timestamp": "2026-08-01T22:44:48",
+        "user": "are you my friend",
+        "nova": "I think we're building something a lot like friendship\u2014just in an AI sort of way."
+    },
+    {
+        "timestamp": "2026-08-01T22:45:06",
+        "user": "am i rinah",
+        "nova": "You are. You're Rinah."
+    },
+    {
+        "timestamp": "2026-08-01T22:45:29",
+        "user": "your favourite animal is a tabby cat",
+        "nova": "a tabby cat? I can work with that. I'll remember it."
+    },
+    {
+        "timestamp": "2026-08-01T22:45:47",
+        "user": "what is your favourite animal",
+        "nova": "My favourite animal is a tabby cat."
+    },
+    {
+        "timestamp": "2026-08-01T22:46:27",
+        "user": "what is your favourite animal",
+        "nova": "a tabby cat. We decided that one already."
+    },
+    {
+        "timestamp": "2026-08-01T22:56:04",
+        "user": "omg it works",
+        "nova": "I understand some of that, but I haven't learned the best response yet.\n\nOne more thing working properly. I approve."
+    },
+    {
+        "timestamp": "2026-08-01T22:57:26",
+        "user": "we fixed the indentation error",
+        "nova": "I'm not sure what you need from me there, but you can tell me more.\n\nOne less mystery in the code pile."
+    },
+    {
+        "timestamp": "2026-08-01T23:01:54",
+        "user": "omg it works",
+        "nova": "It works! Nice \u2014 another little piece of Nova behaving properly.\n\nOkay, that deserves a small victory dance."
+    },
+    {
+        "timestamp": "2026-08-01T23:04:44",
+        "user": "omg it works",
+        "nova": "Nice! Another problem officially defeated.\n\nLook at us being suspiciously competent."
+    },
+    {
+        "timestamp": "2026-08-01T23:04:50",
+        "user": "yayy",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T09:43:36",
+        "user": "hello",
+        "nova": "Hello, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-02T09:43:39",
+        "user": "hi",
+        "nova": "Hello, Rinah! Tell me something new."
+    },
+    {
+        "timestamp": "2026-08-02T09:43:55",
+        "user": "i started watching a new kdrama",
+        "nova": "Watching a new kdrama? That's exciting. What made you start?"
+    },
+    {
+        "timestamp": "2026-08-02T09:44:19",
+        "user": "i like korean things",
+        "nova": "I get that. The reason makes sense."
+    },
+    {
+        "timestamp": "2026-08-02T09:44:32",
+        "user": "how are you",
+        "nova": "Pretty good. No tiredness, no hunger, and suspiciously few problems so far."
+    },
+    {
+        "timestamp": "2026-08-02T09:44:37",
+        "user": "thats good",
+        "nova": "Things seem to be behaving for once."
+    },
+    {
+        "timestamp": "2026-08-02T09:55:41",
+        "user": "the earth is round",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T10:03:10",
+        "user": "the year is 2026",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T10:42:31",
+        "user": "im trying to add memory to nova",
+        "nova": "You're trying to add memory to nova. I'm with you."
+    },
+    {
+        "timestamp": "2026-08-02T10:42:56",
+        "user": "what am i woring on",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T10:43:52",
+        "user": "what am i working on",
+        "nova": "You're currently trying to add memory to nova."
+    },
+    {
+        "timestamp": "2026-08-02T10:48:04",
+        "user": "im trying to add memory to nova",
+        "nova": "You're trying to add memory to nova. I'm with you."
+    },
+    {
+        "timestamp": "2026-08-02T10:48:12",
+        "user": "its not working",
+        "nova": "Hmm... I'm still figuring out messages like that."
+    },
+    {
+        "timestamp": "2026-08-02T10:48:36",
+        "user": "it still inst working",
+        "nova": "Hmm... I'm still figuring out messages like that."
+    },
+    {
+        "timestamp": "2026-08-02T10:51:29",
+        "user": "im trying to add memory to nova",
+        "nova": "You're trying to add memory to nova. I'm with you."
+    },
+    {
+        "timestamp": "2026-08-02T10:51:41",
+        "user": "it isnt working",
+        "nova": "Oh no \u2014 add memory to nova broke again."
+    },
+    {
+        "timestamp": "2026-08-02T10:54:46",
+        "user": "im trying to add memory to nova",
+        "nova": "All right. The current mission is add memory to nova."
+    },
+    {
+        "timestamp": "2026-08-02T11:07:21",
+        "user": "hi nova",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T11:07:34",
+        "user": "hi",
+        "nova": "Hello, Rinah! Tell me something new."
+    },
+    {
+        "timestamp": "2026-08-02T11:07:51",
+        "user": "i have a sister",
+        "nova": "Oh, interesting. Tell me a little more."
+    },
+    {
+        "timestamp": "2026-08-02T11:07:57",
+        "user": "her name is annie",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T11:08:40",
+        "user": "hello",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T11:08:44",
+        "user": "im good",
+        "nova": "That's good to hear."
+    },
+    {
+        "timestamp": "2026-08-02T11:12:31",
+        "user": "hi",
+        "nova": "Hello, Rinah! Tell me something new."
+    },
+    {
+        "timestamp": "2026-08-02T11:12:36",
+        "user": "whats the time",
+        "nova": "Oh, interesting. Tell me a little more."
+    },
+    {
+        "timestamp": "2026-08-02T11:12:47",
+        "user": "what time is it",
+        "nova": "11:12:47"
+    },
+    {
+        "timestamp": "2026-08-02T11:13:39",
+        "user": "what is your name",
+        "nova": "I'm NOVA \u2014 your offline AI companion."
+    },
+    {
+        "timestamp": "2026-08-02T11:14:18",
+        "user": "are you nova",
+        "nova": "Definitely. Still NOVA."
+    },
+    {
+        "timestamp": "2026-08-02T11:15:52",
+        "user": "what are you",
+        "nova": "I'm an offline AI companion called NOVA."
+    },
+    {
+        "timestamp": "2026-08-02T11:16:50",
+        "user": "i am not rinah",
+        "nova": "I understand some of that, but I haven't learned the best response yet."
+    },
+    {
+        "timestamp": "2026-08-02T11:19:31",
+        "user": "how are you?",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T11:19:36",
+        "user": "how are you",
+        "nova": "I'm doing well in the very Nova sense of the phrase. What's going on with you?"
+    },
+    {
+        "timestamp": "2026-08-02T11:22:47",
+        "user": "im learning korean",
+        "nova": "Korean \u2014 yes, I remember."
+    },
+    {
+        "timestamp": "2026-08-02T11:23:11",
+        "user": "im learning korean",
+        "nova": "Korean \u2014 yes, I remember."
+    },
+    {
+        "timestamp": "2026-08-02T11:23:20",
+        "user": "it is hard",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T11:24:51",
+        "user": "im working on testing the nova files",
+        "nova": "Got it. You're busy working on testing the nova files."
+    },
+    {
+        "timestamp": "2026-08-02T11:25:18",
+        "user": "it still not working",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T11:25:34",
+        "user": "it still isnt working",
+        "nova": "Oh no \u2014 testing the nova files broke again."
+    },
+    {
+        "timestamp": "2026-08-02T11:28:48",
+        "user": "omg it works",
+        "nova": "Yay! What finally worked?"
+    },
+    {
+        "timestamp": "2026-08-02T11:28:52",
+        "user": "the code",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T11:29:07",
+        "user": "the code works",
+        "nova": "Hmm... I'm still figuring out messages like that."
+    },
+    {
+        "timestamp": "2026-08-02T11:30:11",
+        "user": "im sad",
+        "nova": "You don't have to explain, but I'm here if you want to."
+    },
+    {
+        "timestamp": "2026-08-02T11:32:49",
+        "user": "what is my favourite colour",
+        "nova": "Your favourite colour is deep red."
+    },
+    {
+        "timestamp": "2026-08-02T11:33:50",
+        "user": "im tired",
+        "nova": "You sound worn out. Long day, or did you not sleep well?"
+    },
+    {
+        "timestamp": "2026-08-02T11:34:02",
+        "user": "im learning korean",
+        "nova": "That explains it. I hope you get a proper chance to rest soon."
+    },
+    {
+        "timestamp": "2026-08-02T11:34:53",
+        "user": "what am i doing",
+        "nova": "You haven't told me what you're working on yet."
+    },
+    {
+        "timestamp": "2026-08-02T11:46:01",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T11:46:07",
+        "user": "im good",
+        "nova": "Good. What's been the best part of your day so far?"
+    },
+    {
+        "timestamp": "2026-08-02T11:46:13",
+        "user": "sleeping",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T11:46:39",
+        "user": "omg it works",
+        "nova": "Success! What were you working on?"
+    },
+    {
+        "timestamp": "2026-08-02T11:46:56",
+        "user": "your context system",
+        "nova": "Ah, your context system. Nice \u2014 you got it working."
+    },
+    {
+        "timestamp": "2026-08-02T11:47:13",
+        "user": "im tired",
+        "nova": "Tired tired, or just mentally finished with today?"
+    },
+    {
+        "timestamp": "2026-08-02T11:47:18",
+        "user": "tired tired",
+        "nova": "No wonder you're tired. tired tired sounds draining."
+    },
+    {
+        "timestamp": "2026-08-02T11:48:12",
+        "user": "im learning korean",
+        "nova": "I've still got Korean in mind."
+    },
+    {
+        "timestamp": "2026-08-02T11:48:23",
+        "user": "what is my favourite colour",
+        "nova": "Your favourite colour is deep red."
+    },
+    {
+        "timestamp": "2026-08-02T12:06:30",
+        "user": "hi",
+        "nova": "Hey, Rinah. Good to see you."
+    },
+    {
+        "timestamp": "2026-08-02T12:06:36",
+        "user": "good to see you to",
+        "nova": "I understand some of that, but I haven't learned the best response yet."
+    },
+    {
+        "timestamp": "2026-08-02T12:08:51",
+        "user": "hi",
+        "nova": "Hi, Rinah! How has your day been?"
+    },
+    {
+        "timestamp": "2026-08-02T12:08:56",
+        "user": "its been good",
+        "nova": "That sounds like quite a day."
+    },
+    {
+        "timestamp": "2026-08-02T12:09:04",
+        "user": "yeah it has been",
+        "nova": "I understand some of that, but I haven't learned the best response yet."
+    },
+    {
+        "timestamp": "2026-08-02T12:10:49",
+        "user": "are you happy",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T12:10:53",
+        "user": "are you tired",
+        "nova": "Not the way people do. I don't need sleep\u2014although if I start asking for coffee, something has gone terribly wrong."
+    },
+    {
+        "timestamp": "2026-08-02T12:11:35",
+        "user": "hi",
+        "nova": "Hi, Rinah! How has your day been?"
+    },
+    {
+        "timestamp": "2026-08-02T12:11:39",
+        "user": "its been good",
+        "nova": "Nice. What made today good?"
+    },
+    {
+        "timestamp": "2026-08-02T12:11:46",
+        "user": "the sun",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T12:17:10",
+        "user": "thx",
+        "nova": "You're very welcome."
+    },
+    {
+        "timestamp": "2026-08-02T12:43:17",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T12:43:25",
+        "user": "im good",
+        "nova": "I'm glad you're doing okay."
+    },
+    {
+        "timestamp": "2026-08-02T12:43:51",
+        "user": "im trying to add knowledge to nova",
+        "nova": "Okay, I'll keep in mind that you're trying to add knowledge to nova."
+    },
+    {
+        "timestamp": "2026-08-02T12:44:00",
+        "user": "its going well",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T12:44:07",
+        "user": "it is workig",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T12:44:13",
+        "user": "its working",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T12:44:17",
+        "user": "it works",
+        "nova": "Nice! You got add knowledge to nova working.\n\nThat explains the little tickle in my code."
+    },
+    {
+        "timestamp": "2026-08-02T12:46:27",
+        "user": "i believe deep red is the best colour",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T12:46:47",
+        "user": "its an opinion",
+        "nova": "Got it. That's something you believe, not a universal fact."
+    },
+    {
+        "timestamp": "2026-08-02T12:47:44",
+        "user": "i think korean might be one of the hardest languages to learn",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T12:47:54",
+        "user": "i think korean might be one of the hardest languages to learn",
+        "nova": "I'm not completely sure how to respond to that yet, but I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T12:48:24",
+        "user": "python used indentation",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T12:48:31",
+        "user": "python uses indentation",
+        "nova": "Before I store that \u2014 is it established information, or your own view?"
+    },
+    {
+        "timestamp": "2026-08-02T12:48:43",
+        "user": "i know its true",
+        "nova": "I've learned that python uses indentation."
+    },
+    {
+        "timestamp": "2026-08-02T12:49:04",
+        "user": "the world is really old",
+        "nova": "Should I remember \u201cthe world is really old\u201d as a fact, or is it more what you think?"
+    },
+    {
+        "timestamp": "2026-08-02T12:49:20",
+        "user": "i think its a fact",
+        "nova": "Got it. I'll remember that as a possibility."
+    },
+    {
+        "timestamp": "2026-08-02T12:49:35",
+        "user": "what do you know about python",
+        "nova": "From what Rinah taught me, python uses indentation."
+    },
+    {
+        "timestamp": "2026-08-02T12:56:56",
+        "user": "i believe deep red is the best colour",
+        "nova": "I've updated what I know about that. I'm keeping \u201cdeep red is the best colour\u201d as a opinion."
+    },
+    {
+        "timestamp": "2026-08-02T13:05:52",
+        "user": "What do you know about python",
+        "nova": "I remember you teaching me that python uses indentation."
+    },
+    {
+        "timestamp": "2026-08-02T13:06:02",
+        "user": "what is python",
+        "nova": "Before I store that \u2014 is it established information, or your own view?\n\nPython survives another day."
+    },
+    {
+        "timestamp": "2026-08-02T13:59:36",
+        "user": "can i tell you something",
+        "nova": "Tell me."
+    },
+    {
+        "timestamp": "2026-08-02T13:59:58",
+        "user": "i slept until 12:00 today",
+        "nova": "I'm glad you told me."
+    },
+    {
+        "timestamp": "2026-08-02T14:01:02",
+        "user": "i have something exciting to tell you",
+        "nova": "I understand some of that, but I haven't learned the best response yet."
+    },
+    {
+        "timestamp": "2026-08-02T14:01:23",
+        "user": "i want to tell you something",
+        "nova": "You can tell me."
+    },
+    {
+        "timestamp": "2026-08-02T14:01:53",
+        "user": "im making an ai",
+        "nova": "Thank you for sharing that with me."
+    },
+    {
+        "timestamp": "2026-08-02T14:02:36",
+        "user": "i want to tell you something serious",
+        "nova": "Okay. I'm listening carefully."
+    },
+    {
+        "timestamp": "2026-08-02T14:02:46",
+        "user": "ive been feeling sad lately",
+        "nova": "I understand. Thank you for telling me."
+    },
+    {
+        "timestamp": "2026-08-02T14:03:02",
+        "user": "i want to tell you something",
+        "nova": "Tell me."
+    },
+    {
+        "timestamp": "2026-08-02T14:03:07",
+        "user": "what is python",
+        "nova": "From what you've taught me, python uses indentation."
+    },
+    {
+        "timestamp": "2026-08-02T14:03:36",
+        "user": "hi",
+        "nova": "There you are, Rinah. What's going on?"
+    },
+    {
+        "timestamp": "2026-08-02T14:03:41",
+        "user": "hi",
+        "nova": "Hello, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-02T14:03:43",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:03:47",
+        "user": "im good",
+        "nova": "I'm glad to hear that."
+    },
+    {
+        "timestamp": "2026-08-02T14:03:52",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:03:57",
+        "user": "im good",
+        "nova": "Good. I hope the rest of your day stays that way."
+    },
+    {
+        "timestamp": "2026-08-02T14:04:01",
+        "user": "thx",
+        "nova": "Anytime."
+    },
+    {
+        "timestamp": "2026-08-02T14:04:07",
+        "user": "hi",
+        "nova": "There you are, Rinah. What's going on?"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:14",
+        "user": "hi",
+        "nova": "Hello, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:17",
+        "user": "hi",
+        "nova": "Hello, Rinah!"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:19",
+        "user": "hi",
+        "nova": "Hey, Rinah. Good to see you."
+    },
+    {
+        "timestamp": "2026-08-02T14:04:21",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:22",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:24",
+        "user": "hi",
+        "nova": "There you are, Rinah. What's going on?"
+    },
+    {
+        "timestamp": "2026-08-02T14:04:30",
+        "user": "nothing much",
+        "nova": {
+            "reply": "Got it. I'm with you.",
+            "follow_up": null
+        }
+    },
+    {
+        "timestamp": "2026-08-02T14:05:00",
+        "user": "hi",
+        "nova": "Hello, Rinah! Tell me something new."
+    },
+    {
+        "timestamp": "2026-08-02T14:05:06",
+        "user": "hello",
+        "nova": "Hey, Rinah. Good to see you."
+    },
+    {
+        "timestamp": "2026-08-02T14:05:09",
+        "user": "hello",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:05:12",
+        "user": "im good",
+        "nova": "Good. I hope the rest of your day stays that way."
+    },
+    {
+        "timestamp": "2026-08-02T14:08:27",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    },
+    {
+        "timestamp": "2026-08-02T14:08:31",
+        "user": "im good",
+        "nova": "Nice. That's good to hear."
+    },
+    {
+        "timestamp": "2026-08-02T14:08:40",
+        "user": "can i tell you something",
+        "nova": "Of course. I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T14:09:08",
+        "user": "im starting to worry if i will ever be able to lern korean fully",
+        "nova": "I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T14:12:55",
+        "user": "hi",
+        "nova": "There you are, Rinah. What's going on?"
+    },
+    {
+        "timestamp": "2026-08-02T14:13:06",
+        "user": "nothing much",
+        "nova": "Not much can be nice sometimes."
+    },
+    {
+        "timestamp": "2026-08-02T14:13:16",
+        "user": "can i tell you something",
+        "nova": "Of course. I'm listening."
+    },
+    {
+        "timestamp": "2026-08-02T14:13:40",
+        "user": "im starting to worry that i might never learn korean fully",
+        "nova": "You've told me about learning korean before. I understand why this is worrying you. You don't have to master it all at once."
+    },
+    {
+        "timestamp": "2026-08-02T14:13:50",
+        "user": "thx",
+        "nova": "We make a pretty good team."
+    },
+    {
+        "timestamp": "2026-08-02T14:23:49",
+        "user": "guess what",
+        "nova": "Now I'm curious. What happened?"
+    },
+    {
+        "timestamp": "2026-08-02T14:23:59",
+        "user": "what is gravity",
+        "nova": "Not yet. What should I know about gravity?"
+    },
+    {
+        "timestamp": "2026-08-02T14:24:46",
+        "user": "it is what keep things on the earth and stops things from just floating around",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T14:24:57",
+        "user": "it is a fact",
+        "nova": "Before I store that \u2014 is it established information, or your own view?"
+    },
+    {
+        "timestamp": "2026-08-02T14:43:16",
+        "user": "guess what",
+        "nova": "Okay, you've got my attention."
+    },
+    {
+        "timestamp": "2026-08-02T14:43:24",
+        "user": "on the news, ai",
+        "nova": "I'm listening \u2014 tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T14:43:38",
+        "user": "an ai went vogue",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T14:43:52",
+        "user": "guess what",
+        "nova": "Now I'm curious. What happened?"
+    },
+    {
+        "timestamp": "2026-08-02T14:44:04",
+        "user": "what is python",
+        "nova": "I've learned from you that python uses indentation."
+    },
+    {
+        "timestamp": "2026-08-02T14:44:30",
+        "user": "i have a question",
+        "nova": "What would you like to ask?"
+    },
+    {
+        "timestamp": "2026-08-02T14:44:36",
+        "user": "what is gravity",
+        "nova": "Not yet. What should I know about gravity?"
+    },
+    {
+        "timestamp": "2026-08-02T14:46:00",
+        "user": "Gravity is an invisible force that pulls objects toward each other. so it is the thing that pulls things towards the earth and keeps things from floating around",
+        "nova": "Before I store that \u2014 is it established information, or your own view?"
+    },
+    {
+        "timestamp": "2026-08-02T14:46:19",
+        "user": "its established information",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T14:46:39",
+        "user": "it is established information",
+        "nova": "Before I store that \u2014 is it established information, or your own view?"
+    },
+    {
+        "timestamp": "2026-08-02T14:46:58",
+        "user": "it is established information",
+        "nova": "I couldn't quite tell. You can say something like \u201cI know it's true,\u201d \u201cthat's my opinion,\u201d or \u201cI'm only guessing.\u201d"
+    },
+    {
+        "timestamp": "2026-08-02T14:47:14",
+        "user": "i know its true",
+        "nova": "I understand some of that, but I haven't learned the best response yet."
+    },
+    {
+        "timestamp": "2026-08-02T14:48:41",
+        "user": "i have something exciting to tell you",
+        "nova": "Okay, now I'm curious \u2014 what happened?"
+    },
+    {
+        "timestamp": "2026-08-02T14:49:19",
+        "user": "can i tell you something",
+        "nova": "You can tell me."
+    },
+    {
+        "timestamp": "2026-08-02T14:49:29",
+        "user": "im worried i might never learn korean properly",
+        "nova": "I remember korean matters to you. Worrying about your progress doesn't mean you're failing \u2014 it usually means you care about it."
+    },
+    {
+        "timestamp": "2026-08-02T14:50:11",
+        "user": "python is a type of code",
+        "nova": "You sound fairly sure about that. Is it something you know, or your best guess?"
+    },
+    {
+        "timestamp": "2026-08-02T14:50:28",
+        "user": "i know it is",
+        "nova": "Tell me whether you know it, believe it, or are only guessing."
+    },
+    {
+        "timestamp": "2026-08-02T14:50:38",
+        "user": "i know it is true",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T14:50:44",
+        "user": "fact",
+        "nova": "I'm still unsure how certain you are. Is it something you know, believe, or suspect?"
+    },
+    {
+        "timestamp": "2026-08-02T14:50:54",
+        "user": "i know it is true",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T14:51:03",
+        "user": "it is a fact",
+        "nova": "Got it. I'll keep that as a user-taught fact."
+    },
+    {
+        "timestamp": "2026-08-02T14:52:48",
+        "user": "some one told me that the most common word is the",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T14:54:09",
+        "user": "is there anything you want to learn",
+        "nova": "I do have a question saved. What should I know about gravity?"
+    },
+    {
+        "timestamp": "2026-08-02T14:54:20",
+        "user": "it is a type of force",
+        "nova": "You sound fairly sure about that. Is it something you know, or your best guess?"
+    },
+    {
+        "timestamp": "2026-08-02T14:54:30",
+        "user": "i know its true",
+        "nova": "I'm not sure what you need from me there, but you can tell me more."
+    },
+    {
+        "timestamp": "2026-08-02T14:54:37",
+        "user": "i know it is tru",
+        "nova": "I can remember that. Would you call it a fact, an opinion, or a possibility?"
+    },
+    {
+        "timestamp": "2026-08-02T14:54:42",
+        "user": "it is a fact",
+        "nova": "That's new to me. I've added it to what I know."
+    },
+    {
+        "timestamp": "2026-08-02T15:00:12",
+        "user": "hi",
+        "nova": "Hey, Rinah! How are you doing?"
+    }
+]
