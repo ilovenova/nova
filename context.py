@@ -13,6 +13,8 @@ class Context:
     def __init__(self, memory):
         self.memory = memory
         self.current_learning_topic = ""
+        self.current_emotion = ""
+        self.current_emotion_topic = ""
 
     def observe(self, message, text):
 
@@ -38,6 +40,101 @@ class Context:
 
                 return
 
+        self.observe_emotion(
+            message,
+            text
+        )
+
+    def observe_emotion(
+        self,
+        message,
+        text
+    ):
+
+        emotion_patterns = [
+            (
+                "worried",
+                [
+                    r"^i(?:'m| am|m) worried about (.+)$",
+                    r"^i(?:'m| am|m) worried (?:that|if) (.+)$"
+                ]
+            ),
+            (
+                "scared",
+                [
+                    r"^i(?:'m| am|m) scared about (.+)$",
+                    r"^i(?:'m| am|m) scared (?:that|of) (.+)$"
+                ]
+            ),
+            (
+                "upset",
+                [
+                    r"^i(?:'m| am|m) upset about (.+)$",
+                    r"^i(?:'m| am|m) upset (?:that|because) (.+)$"
+                ]
+            ),
+            (
+                "excited",
+                [
+                    r"^i(?:'m| am|m) excited about (.+)$",
+                    r"^i(?:'m| am|m) excited (?:that|because) (.+)$"
+                ]
+            ),
+            (
+                "proud",
+                [
+                    r"^i(?:'m| am|m) proud of (.+)$",
+                    r"^i(?:'m| am|m) proud (?:that|because) (.+)$"
+                ]
+            ),
+            (
+                "sad",
+                [
+                    r"^i(?:'m| am|m) sad about (.+)$",
+                    r"^i(?:'m| am|m) sad (?:that|because) (.+)$"
+                ]
+            ),
+            (
+                "happy",
+                [
+                    r"^i(?:'m| am|m) happy about (.+)$",
+                    r"^i(?:'m| am|m) happy (?:that|because) (.+)$"
+                ]
+            )
+        ]
+
+        for emotion, patterns in emotion_patterns:
+
+            for pattern in patterns:
+
+                match = re.match(
+                    pattern,
+                    text
+                )
+
+                if not match:
+                    continue
+
+                topic = match.group(1).strip().rstrip(".!")
+
+                if not topic:
+                    return
+
+                self.current_emotion = emotion
+                self.current_emotion_topic = topic
+
+                self.memory.set_profile_fact(
+                    f"recent emotion: {emotion}",
+                    topic
+                )
+
+                self.memory.add_event(
+                    f"felt {emotion} about: {topic}",
+                    "recent"
+                )
+
+                return
+
     def respond(
         self,
         message,
@@ -51,6 +148,14 @@ class Context:
     ):
 
         if self.is_direct_new_request(text):
+
+            if pending_follow_up:
+                return self.make_result(
+                    "",
+                    clear_pending=True,
+                    continue_routing=True
+                )
+
             return None
 
         if pending_follow_up:
@@ -83,14 +188,24 @@ class Context:
                         continue_routing=True
                     )
 
-                reply = conversation.answer_follow_up(
+                result = conversation.answer_follow_up(
                     message,
                     pending_follow_up
                 )
 
-                if reply:
+                if isinstance(result, dict):
+
                     return self.make_result(
-                        reply,
+                        result.get("reply", ""),
+                        clear_pending=True,
+                        next_follow_up=result.get(
+                            "follow_up"
+                        )
+                    )
+
+                if result:
+                    return self.make_result(
+                        result,
                         clear_pending=True
                     )
 
@@ -213,6 +328,14 @@ class Context:
         feeling = context.get("topic", "that way")
         reason = message.strip().rstrip(".!")
 
+        self.current_emotion = feeling
+        self.current_emotion_topic = reason
+
+        self.memory.set_profile_fact(
+            f"recent emotion: {feeling}",
+            reason
+        )
+
         self.memory.add_event(
             f"felt {feeling} because: {reason}",
             "today"
@@ -330,7 +453,14 @@ class Context:
             "that is difficult",
             "im finding it hard",
             "i'm finding it hard",
-            "i am finding it hard"
+            "i am finding it hard",
+            "im struggling with it",
+            "i'm struggling with it",
+            "i am struggling with it",
+            "its taking me a long time",
+            "it's taking me a long time",
+            "i dont think im getting it",
+            "i don't think i'm getting it"
         ]
 
     def looks_like_social_answer(self, text):

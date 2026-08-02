@@ -27,6 +27,9 @@ from context import Context
 from relationships import Relationships
 from world_learning import WorldLearning
 from conversation import Conversation
+from emotions import Emotions
+from memory_editor import MemoryEditor
+from reflection import Reflection
 
 
 class Brain:
@@ -44,6 +47,9 @@ class Brain:
         self.relationships = Relationships(memory)
         self.world_learning = WorldLearning(memory)
         self.conversation = Conversation(memory)
+        self.emotions = Emotions(memory)
+        self.memory_editor = MemoryEditor(memory)
+        self.reflection = Reflection(memory)
 
         self.last_user_message = ""
         self.last_nova_reply = ""
@@ -94,6 +100,98 @@ class Brain:
                     message,
                     context_result.get("reply", "")
                 )
+
+        if (
+            self.pending_follow_up
+            and self.pending_follow_up.get("kind")
+            == "reflection"
+        ):
+
+            result = self.reflection.answer_follow_up(
+                message,
+                self.pending_follow_up
+            )
+
+            if result:
+
+                self.pending_follow_up = result.get(
+                    "follow_up"
+                )
+
+                return self.finish(
+                    message,
+                    result.get("reply", "")
+                )
+
+        reflection_result = self.reflection.respond(
+            message,
+            text
+        )
+
+        if reflection_result:
+
+            self.pending_follow_up = reflection_result.get(
+                "follow_up"
+            )
+
+            return self.finish(
+                message,
+                reflection_result.get("reply", "")
+            )
+
+        memory_edit_result = self.memory_editor.respond(
+            message,
+            text
+        )
+
+        if memory_edit_result:
+
+            self.pending_follow_up = memory_edit_result.get(
+                "follow_up"
+            )
+
+            return self.finish(
+                message,
+                memory_edit_result.get("reply", "")
+            )
+
+        if (
+            self.pending_follow_up
+            and self.pending_follow_up.get("kind")
+            == "emotion_thread"
+        ):
+
+            result = self.emotions.answer_follow_up(
+                message,
+                self.pending_follow_up
+            )
+
+            if result:
+
+                self.pending_follow_up = result.get(
+                    "follow_up"
+                )
+
+                return self.finish(
+                    message,
+                    result.get("reply", "")
+                )
+
+        emotion_result = self.emotions.respond(
+            message,
+            text
+        )
+
+        if emotion_result:
+
+            self.pending_follow_up = emotion_result.get(
+                "follow_up"
+            )
+
+            return self.finish(
+                message,
+                emotion_result.get("reply", "")
+            )
 
         relationship_result = self.relationships.respond(
             message,
