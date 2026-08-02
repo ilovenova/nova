@@ -5,6 +5,8 @@ Handles loading, saving, searching and editing NOVA's memory.
 """
 
 from datetime import datetime
+import re
+
 from utils import load_json, save_json
 
 
@@ -33,6 +35,7 @@ class Memory:
         self._upgrade_profile()
         self._upgrade_settings()
         self._upgrade_knowledge()
+        self._clean_knowledge_library()
 
     # -------------------------------------------------
     # Upgrade profile.json safely
@@ -140,6 +143,321 @@ class Memory:
             self.knowledge["curiosities"] = []
 
         self.save_all()
+
+    # -------------------------------------------------
+    # Clean and maintain knowledge.json
+    # -------------------------------------------------
+
+    def _clean_knowledge_library(self):
+
+        items = self.knowledge.setdefault(
+            "items",
+            []
+        )
+
+        curiosities = self.knowledge.setdefault(
+            "curiosities",
+            []
+        )
+
+        cleaned_items = []
+        seen_statements = set()
+
+        for item in items:
+
+            statement = item.get(
+                "statement",
+                ""
+            ).strip()
+
+            if not statement:
+                continue
+
+            normalised = self._normalise_text(
+                statement
+            )
+
+            # Remove old certainty replies that were
+            # accidentally saved as world knowledge.
+            if normalised in [
+                "i know it is true",
+                "i know its true",
+                "i know it is tru",
+                "i know its tru"
+            ]:
+                continue
+
+            if normalised in seen_statements:
+                continue
+
+            seen_statements.add(normalised)
+
+            subject = item.get(
+                "subject",
+                ""
+            ).strip()
+
+            if subject.lower().startswith(
+                "korean might be"
+            ):
+                item["subject"] = "korean"
+
+            cleaned_items.append(item)
+
+        cleaned_curiosities = []
+
+        for curiosity in curiosities:
+
+            topic = self._normalise_text(
+                curiosity.get(
+                    "topic",
+                    ""
+                )
+            )
+
+            question = self._normalise_text(
+                curiosity.get(
+                    "question",
+                    ""
+                )
+            )
+
+            if topic == "i know it":
+                continue
+
+            if (
+                topic == "gravity"
+                and curiosity.get("status")
+                in ["open", "waiting"]
+                and self.search_knowledge("gravity")
+            ):
+                curiosity["status"] = "answered"
+                curiosity["updated_at"] = (
+                    self.current_timestamp()
+                )
+
+            if (
+                "i know it is true" in question
+                or "i know it is tru" in question
+            ):
+                continue
+
+            cleaned_curiosities.append(
+                curiosity
+            )
+
+        self.knowledge["items"] = cleaned_items
+        self.knowledge["curiosities"] = (
+            cleaned_curiosities
+        )
+
+        self.save_all()
+
+    def forget_knowledge_by_id(
+        self,
+        knowledge_id
+    ):
+
+        items = self.knowledge.get(
+            "items",
+            []
+        )
+
+        for item in list(items):
+
+            if item.get("id") == knowledge_id:
+
+                subject = item.get(
+                    "subject",
+                    ""
+                )
+
+                items.remove(item)
+
+                self.remove_curiosities_for_topic(
+                    subject
+                )
+
+                self.save_all()
+                return True
+
+        return False
+
+    def forget_knowledge_statement(
+        self,
+        statement
+    ):
+
+        target = self._normalise_text(
+            statement
+        )
+
+        items = self.knowledge.get(
+            "items",
+            []
+        )
+
+        for item in list(items):
+
+            if (
+                self._normalise_text(
+                    item.get(
+                        "statement",
+                        ""
+                    )
+                )
+                == target
+            ):
+
+                subject = item.get(
+                    "subject",
+                    ""
+                )
+
+                items.remove(item)
+
+                self.remove_curiosities_for_topic(
+                    subject
+                )
+
+                self.save_all()
+                return True
+
+        return False
+
+    def forget_knowledge_subject(
+        self,
+        subject
+    ):
+
+        target = self._normalise_text(
+            subject
+        )
+
+        items = self.knowledge.get(
+            "items",
+            []
+        )
+
+        removed = False
+
+        for item in list(items):
+
+            if (
+                self._normalise_text(
+                    item.get(
+                        "subject",
+                        ""
+                    )
+                )
+                == target
+            ):
+                items.remove(item)
+                removed = True
+
+        if removed:
+
+            self.remove_curiosities_for_topic(
+                subject
+            )
+
+            self.save_all()
+
+        return removed
+
+    def forget_last_knowledge(self):
+
+        items = self.knowledge.get(
+            "items",
+            []
+        )
+
+        if not items:
+            return False
+
+        latest = max(
+            items,
+            key=lambda item: item.get(
+                "created_at",
+                ""
+            )
+        )
+
+        return self.forget_knowledge_by_id(
+            latest.get(
+                "id",
+                ""
+            )
+        )
+
+    def delete_curiosity(
+        self,
+        curiosity_id
+    ):
+
+        curiosities = self.knowledge.get(
+            "curiosities",
+            []
+        )
+
+        for curiosity in list(
+            curiosities
+        ):
+
+            if (
+                curiosity.get("id")
+                == curiosity_id
+            ):
+
+                curiosities.remove(
+                    curiosity
+                )
+
+                self.save_all()
+                return True
+
+        return False
+
+    def remove_curiosities_for_topic(
+        self,
+        topic
+    ):
+
+        target = self._normalise_text(
+            topic
+        )
+
+        curiosities = self.knowledge.get(
+            "curiosities",
+            []
+        )
+
+        removed = False
+
+        for curiosity in list(
+            curiosities
+        ):
+
+            if (
+                self._normalise_text(
+                    curiosity.get(
+                        "topic",
+                        ""
+                    )
+                )
+                == target
+            ):
+
+                curiosities.remove(
+                    curiosity
+                )
+
+                removed = True
+
+        if removed:
+            self.save_all()
+
+        return removed
 
     # -------------------------------------------------
     # Upgrade settings.json safely
@@ -570,8 +888,14 @@ class Memory:
 
     def _normalise_text(self, text):
 
+        cleaned = re.sub(
+            r"[^a-z0-9\s']",
+            "",
+            str(text).lower()
+        )
+
         return " ".join(
-            str(text).lower().strip().split()
+            cleaned.strip().split()
         )
 
     # -------------------------------------------------
@@ -640,6 +964,50 @@ class Memory:
                     return True
 
             return False
+
+        if category in [
+            "knowledge",
+            "world knowledge"
+        ]:
+
+            if key:
+                return (
+                    self.forget_knowledge_subject(
+                        key
+                    )
+                    or
+                    self.forget_knowledge_statement(
+                        key
+                    )
+                )
+
+            return self.forget_last_knowledge()
+
+        if category in [
+            "curiosity",
+            "question"
+        ]:
+
+            if key:
+                return (
+                    self.remove_curiosities_for_topic(
+                        key
+                    )
+                )
+
+            open_curiosities = (
+                self.get_open_curiosities()
+            )
+
+            if not open_curiosities:
+                return False
+
+            return self.delete_curiosity(
+                open_curiosities[0].get(
+                    "id",
+                    ""
+                )
+            )
 
         return False
 

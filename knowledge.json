@@ -40,29 +40,81 @@
             "times_recalled": 0
         },
         {
-            "id": "knowledge_4",
-            "statement": "i know it is true",
-            "subject": "i know it",
+            "id": "knowledge_6",
+            "statement": "gravity is the force that pulls objects towards Earth",
+            "subject": "gravity",
             "type": "fact",
             "source": "Rinah",
             "confidence": "high",
             "verified": false,
             "notes": "",
-            "created_at": "2026-08-02T14:51:03",
-            "updated_at": "2026-08-02T14:51:03",
+            "created_at": "2026-08-02T18:14:12",
+            "updated_at": "2026-08-02T18:14:12",
             "times_recalled": 0
         },
         {
-            "id": "knowledge_5",
-            "statement": "i know it is tru",
-            "subject": "i know it",
-            "type": "fact",
+            "id": "knowledge_7",
+            "statement": "whales are mammals",
+            "subject": "whales",
+            "type": "assumption",
             "source": "Rinah",
-            "confidence": "high",
+            "confidence": "medium",
+            "verified": false,
+            "notes": "second-hand information",
+            "created_at": "2026-08-02T18:15:26",
+            "updated_at": "2026-08-02T18:15:26",
+            "times_recalled": 0
+        },
+        {
+            "id": "knowledge_8",
+            "statement": "korean might be one of the hardest languages to learn",
+            "subject": "korean",
+            "type": "assumption",
+            "source": "Rinah",
+            "confidence": "low",
             "verified": false,
             "notes": "",
-            "created_at": "2026-08-02T14:54:42",
-            "updated_at": "2026-08-02T14:54:42",
+            "created_at": "2026-08-02T18:16:14",
+            "updated_at": "2026-08-02T18:16:14",
+            "times_recalled": 0
+        },
+        {
+            "id": "knowledge_9",
+            "statement": "octopuses have three hearts",
+            "subject": "octopuses",
+            "type": "assumption",
+            "source": "Rinah",
+            "confidence": "medium",
+            "verified": false,
+            "notes": "second-hand information",
+            "created_at": "2026-08-02T18:16:23",
+            "updated_at": "2026-08-02T18:16:23",
+            "times_recalled": 0
+        },
+        {
+            "id": "knowledge_10",
+            "statement": "the world is egg shaped",
+            "subject": "the world",
+            "type": "assumption",
+            "source": "Rinah",
+            "confidence": "medium",
+            "verified": false,
+            "notes": "",
+            "created_at": "2026-08-02T18:49:30",
+            "updated_at": "2026-08-02T18:49:30",
+            "times_recalled": 0
+        },
+        {
+            "id": "knowledge_11",
+            "statement": "it",
+            "subject": "it",
+            "type": "opinion",
+            "source": "Rinah",
+            "confidence": "personal",
+            "verified": false,
+            "notes": "",
+            "created_at": "2026-08-02T18:53:17",
+            "updated_at": "2026-08-02T18:53:17",
             "times_recalled": 0
         }
     ],
@@ -75,17 +127,8 @@
             "status": "answered",
             "created_at": "2026-08-02T14:23:59",
             "updated_at": "2026-08-02T14:54:20"
-        },
-        {
-            "id": "curiosity_2",
-            "question": "You taught me that i know it is true, and also that i know it is tru. Are those two things connected?",
-            "topic": "i know it",
-            "priority": "low",
-            "status": "open",
-            "created_at": "2026-08-02T14:54:42",
-            "updated_at": "2026-08-02T14:54:42"
         }
     ],
-    "next_item_id": 6,
-    "next_curiosity_id": 3
+    "next_item_id": 12,
+    "next_curiosity_id": 5
 }

@@ -31,6 +31,11 @@ class WorldLearning:
 
     def respond(self, message, text):
 
+        result = self.check_global_forgetting(text)
+
+        if result:
+            return result
+
         result = self.check_learning_invitation(text)
 
         if result:
@@ -53,6 +58,73 @@ class WorldLearning:
 
         if result:
             return result
+
+        return None
+
+    # -------------------------------------------------
+    # Global forgetting
+    # -------------------------------------------------
+
+    def check_global_forgetting(self, text):
+
+        forget_last_knowledge = [
+            "forget i told you that",
+            "forget i told you",
+            "forget what i told you",
+            "dont remember that",
+            "don't remember that",
+            "forget that information",
+            "delete that information"
+        ]
+
+        if text in forget_last_knowledge:
+
+            if self.memory.forget_last_knowledge():
+                return self.make_result(
+                    random.choice([
+                        "Okay. I've forgotten the last thing you taught me.",
+                        "All right — I removed that from what I know.",
+                        "Got it. I won't keep that information."
+                    ])
+                )
+
+            return self.make_result(
+                "I couldn't find any recent world knowledge to forget."
+            )
+
+        forget_question = [
+            "forget that question",
+            "forget the question",
+            "forget what you just asked",
+            "delete that curiosity",
+            "delete the curiosity",
+            "dont wonder about that",
+            "don't wonder about that",
+            "stop wondering about that"
+        ]
+
+        if text in forget_question:
+
+            curiosities = self.memory.get_open_curiosities()
+
+            if not curiosities:
+                return self.make_result(
+                    "I don't have an open question to forget right now."
+                )
+
+            curiosity = curiosities[0]
+
+            self.memory.delete_curiosity(
+                curiosity.get("id", "")
+            )
+
+            return self.make_result(
+                random.choice([
+                    "Okay. I'll forget that question.",
+                    "All right — that curiosity is gone.",
+                    "Got it. I won't keep wondering about that."
+                ])
+            )
 
         return None
 
@@ -360,9 +432,9 @@ class WorldLearning:
 
         return self.make_result(
             random.choice([
-                f"I can remember that. Is it something you know to be true, or are you less certain?",
-                f"Before I keep that, should I treat it as established information or as your own view?",
-                f"You sound fairly sure. Is this something you know, or your best guess?"
+                f"Should I remember “{statement}” as something established, or as your own view?",
+                f"Do you know “{statement}” to be true, or are you less certain?",
+                f"Before I keep that, is it something known to be true or more what you think?"
             ]),
             {
                 "kind": "world_learning",
@@ -794,7 +866,22 @@ class WorldLearning:
             "apparently",
             "i heard",
             "someone told me",
-            "some one told me"
+            "some one told me",
+            "my teacher said",
+            "my teacher told me",
+            "a teacher said",
+            "a teacher told me",
+            "my friend said",
+            "my friend told me",
+            "i read that",
+            "i read somewhere",
+            "i saw that",
+            "i saw online",
+            "wikipedia says",
+            "wikipedia said",
+            "a documentary said",
+            "an article said",
+            "the internet says"
         ]):
             source_note = ""
 
@@ -802,7 +889,22 @@ class WorldLearning:
                 "i heard",
                 "someone told me",
                 "some one told me",
-                "apparently"
+                "apparently",
+                "my teacher said",
+                "my teacher told me",
+                "a teacher said",
+                "a teacher told me",
+                "my friend said",
+                "my friend told me",
+                "i read that",
+                "i read somewhere",
+                "i saw that",
+                "i saw online",
+                "wikipedia says",
+                "wikipedia said",
+                "a documentary said",
+                "an article said",
+                "the internet says"
             ]):
                 source_note = "second-hand information"
 
@@ -826,6 +928,19 @@ class WorldLearning:
             }
 
         if self.contains_any(text, [
+            "research shows",
+            "research has shown",
+            "scientists know",
+            "scientists have shown",
+            "evidence shows",
+            "studies show",
+            "studies have shown",
+            "it is widely accepted",
+            "it's widely accepted",
+            "its widely accepted",
+            "it is generally accepted",
+            "it's generally accepted",
+            "its generally accepted",
             "i know for a fact",
             "this is definitely true",
             "that's definitely true",
@@ -907,6 +1022,16 @@ class WorldLearning:
             "i heard",
             "someone told me",
             "some one told me",
+            "my teacher said",
+            "my teacher told me",
+            "my friend said",
+            "my friend told me",
+            "i read that",
+            "i read somewhere",
+            "i saw that",
+            "wikipedia says",
+            "a documentary said",
+            "an article said",
             "apparently"
         ]):
             return {
@@ -919,7 +1044,17 @@ class WorldLearning:
                         "not sure",
                         "i heard",
                         "someone told me",
-                        "some one told me"
+                        "some one told me",
+                        "my teacher said",
+                        "my teacher told me",
+                        "my friend said",
+                        "my friend told me",
+                        "i read that",
+                        "i read somewhere",
+                        "i saw that",
+                        "wikipedia says",
+                        "a documentary said",
+                        "an article said"
                     ])
                     else "medium"
                 )
@@ -938,6 +1073,15 @@ class WorldLearning:
             "i know it is",
             "i know it's",
             "i know its",
+            "i am certain",
+            "i'm certain",
+            "im certain",
+            "i am sure",
+            "i'm sure",
+            "im sure",
+            "research shows",
+            "scientists know",
+            "studies show",
             "it is established information",
             "it's established information",
             "its established information",
@@ -1068,6 +1212,12 @@ class WorldLearning:
             "i guess ",
             "i assume ",
             "i heard ",
+            "i read ",
+            "i saw ",
+            "my teacher said ",
+            "my teacher told me ",
+            "my friend said ",
+            "my friend told me ",
             "i know for a fact ",
             "i'm not sure ",
             "im not sure ",
@@ -1141,7 +1291,26 @@ class WorldLearning:
             "apparently, ",
             "apparently ",
             "i heard that ",
-            "someone told me that "
+            "someone told me that ",
+            "some one told me that ",
+            "my teacher said that ",
+            "my teacher told me that ",
+            "a teacher said that ",
+            "a teacher told me that ",
+            "my friend said that ",
+            "my friend told me that ",
+            "i read that ",
+            "i saw that ",
+            "wikipedia says that ",
+            "wikipedia said that ",
+            "a documentary said that ",
+            "an article said that ",
+            "the internet says that ",
+            "research shows that ",
+            "research has shown that ",
+            "scientists have shown that ",
+            "studies show that ",
+            "studies have shown that "
         ]
 
         lower = cleaned.lower()
@@ -1262,6 +1431,18 @@ class WorldLearning:
                 f"That replaces the older version in my library."
             ])
 
+        notes = item.get(
+            "notes",
+            ""
+        )
+
+        if "second-hand information" in notes:
+            return random.choice([
+                f"I'll remember that you were told “{statement},” but I won't treat it as confirmed.",
+                f"Got it. I'll keep “{statement}” as second-hand information.",
+                "I'll remember the claim and also that it came from another source."
+            ])
+
         if knowledge_type == "opinion":
             return random.choice([
                 f"I'll remember that as your opinion: “{statement}.”",
@@ -1295,8 +1476,9 @@ class WorldLearning:
 
         return random.choice([
             f"I've learned that {statement}.",
-            f"Got it. I'll keep that as a user-taught fact.",
-            f"That's new to me. I've added it to what I know."
+            "Got it. I'll keep that as a user-taught fact.",
+            "That's new to me. I've added it to what I know.",
+            "Another little piece of the world added."
         ])
 
     def describe_learned_item(self, item):
@@ -1313,6 +1495,18 @@ class WorldLearning:
             "source",
             "you"
         )
+
+        notes = item.get(
+            "notes",
+            ""
+        )
+
+        if "second-hand information" in notes:
+            return random.choice([
+                f"I remember the claim that {statement}, but I have it stored as second-hand information.",
+                f"You told me that {statement}, although you weren't confirming it as established fact.",
+                f"I've heard from you that {statement}, but I still have it marked as unconfirmed."
+            ])
 
         if knowledge_type == "opinion":
             return (
@@ -1343,8 +1537,9 @@ class WorldLearning:
             return random.choice([
                 f"You taught me that {statement}.",
                 f"From what you've taught me, {statement}.",
-                f"I remember you teaching me that {statement}.",
-                f"I've learned from you that {statement}."
+                f"I remember that {statement}.",
+                f"From what I know, {statement}.",
+                f"You've told me before that {statement}."
             ])
 
         return (
