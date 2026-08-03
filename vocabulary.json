@@ -1,0 +1,19 @@
+{
+    "entries": {
+        "sick": {
+            "word": "sick",
+            "meaning": "really good",
+            "source": "user",
+            "register": "informal",
+            "confidence": "high",
+            "times_heard": 12,
+            "times_used": 1,
+            "examples": [
+                "that game was sick",
+                "the game was sick"
+            ]
+        }
+    },
+    "pending_word": "",
+    "pending_example": ""
+}

@@ -30,6 +30,7 @@ from conversation import Conversation
 from emotions import Emotions
 from memory_editor import MemoryEditor
 from reflection import Reflection
+from understanding import Understanding
 
 
 class Brain:
@@ -50,6 +51,7 @@ class Brain:
         self.emotions = Emotions(memory)
         self.memory_editor = MemoryEditor(memory)
         self.reflection = Reflection(memory)
+        self.understanding = Understanding(memory)
 
         self.last_user_message = ""
         self.last_nova_reply = ""
@@ -100,6 +102,22 @@ class Brain:
                     message,
                     context_result.get("reply", "")
                 )
+
+        understanding_result = self.understanding.respond(
+            message,
+            text
+        )
+
+        if understanding_result:
+
+            self.pending_follow_up = understanding_result.get(
+                "follow_up"
+            )
+
+            return self.finish(
+                message,
+                understanding_result.get("reply", "")
+            )
 
         if (
             self.pending_follow_up
