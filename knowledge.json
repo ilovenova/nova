@@ -127,8 +127,17 @@
             "status": "answered",
             "created_at": "2026-08-02T14:23:59",
             "updated_at": "2026-08-02T14:54:20"
+        },
+        {
+            "id": "curiosity_5",
+            "question": "What should I know about no cap?",
+            "topic": "no cap",
+            "priority": "low",
+            "status": "open",
+            "created_at": "2026-08-03T22:12:05",
+            "updated_at": "2026-08-03T22:12:05"
         }
     ],
     "next_item_id": 12,
-    "next_curiosity_id": 5
+    "next_curiosity_id": 6
 }

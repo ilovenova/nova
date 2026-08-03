@@ -2,16 +2,53 @@
     "entries": {
         "sick": {
             "word": "sick",
-            "meaning": "really good",
-            "source": "user",
-            "register": "informal",
-            "confidence": "high",
-            "times_heard": 12,
-            "times_used": 1,
-            "examples": [
-                "that game was sick",
-                "the game was sick"
-            ]
+            "meanings": [
+                {
+                    "meaning": "really good",
+                    "kind": "informal",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "that game was sick",
+                        "the game was sick"
+                    ]
+                }
+            ],
+            "times_heard": 13,
+            "times_used": 1
+        },
+        "no cap": {
+            "word": "no cap",
+            "meanings": [
+                {
+                    "meaning": "im being serious",
+                    "kind": "slang",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "when i say no cap it means im being serious",
+                        "when i say no cap i mean i am being serious"
+                    ]
+                }
+            ],
+            "times_heard": 2,
+            "times_used": 0
+        },
+        "lol": {
+            "word": "lol",
+            "meanings": [
+                {
+                    "meaning": "i found something funny",
+                    "kind": "unknown",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "lol means i found something funny"
+                    ]
+                }
+            ],
+            "times_heard": 1,
+            "times_used": 0
         }
     },
     "pending_word": "",
