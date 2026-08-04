@@ -31,6 +31,7 @@ from emotions import Emotions
 from memory_editor import MemoryEditor
 from reflection import Reflection
 from understanding import Understanding
+from recent_memory import RecentMemory
 
 
 class Brain:
@@ -52,6 +53,7 @@ class Brain:
         self.memory_editor = MemoryEditor(memory)
         self.reflection = Reflection(memory)
         self.understanding = Understanding(memory)
+        self.recent_memory = RecentMemory()
 
         self.last_user_message = ""
         self.last_nova_reply = ""
@@ -65,6 +67,24 @@ class Brain:
     def respond(self, message):
 
         text = message.lower().strip()
+
+        self.recent_memory.record_user(
+            message
+        )
+
+        recent_memory_reply = (
+            self.recent_memory.answer_recent_question(
+                message,
+                text
+            )
+        )
+
+        if recent_memory_reply:
+
+            return self.finish(
+                message,
+                recent_memory_reply
+            )
 
         self.context.observe(message, text)
 
@@ -423,6 +443,10 @@ class Brain:
 
         self.last_user_message = message
         self.last_nova_reply = reply
+
+        self.recent_memory.record_nova(
+            reply
+        )
 
         return reply
 
