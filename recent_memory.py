@@ -23,6 +23,7 @@ class RecentMemory:
         self.last_nova_question = ""
 
         self.last_recalled_fact = None
+        self.last_user_fact = None
 
     # -------------------------------------------------
     # Recording
@@ -244,6 +245,7 @@ class RecentMemory:
                 return
 
         self.facts.append(fact)
+        self.last_user_fact = fact
 
     # -------------------------------------------------
     # Search
@@ -556,6 +558,77 @@ class RecentMemory:
         normalised
     ):
 
+        forget_last_message_phrases = {
+            "forget what i just said",
+            "forget my last message",
+            "forget the last thing i said",
+            "delete what i just said",
+            "remove what i just said"
+        }
+
+        if normalised in forget_last_message_phrases:
+
+            if not self.last_user_fact:
+                return (
+                    "I'm not sure which recent statement "
+                    "you want me to forget."
+                )
+
+            removed = self.remove_fact(
+                self.last_user_fact
+            )
+
+            self.last_user_fact = None
+
+            if removed:
+                return (
+                    "Okay. I've forgotten what you just said."
+                )
+
+            return (
+                "I couldn't find that recent statement anymore."
+            )
+
+        explicit_match = re.match(
+            r"^forget that i said (.+)$",
+            normalised
+        )
+
+        if not explicit_match:
+            explicit_match = re.match(
+                r"^forget that (.+)$",
+                normalised
+            )
+
+        if explicit_match:
+
+            wanted = explicit_match.group(
+                1
+            ).strip()
+
+            match = self.find_matching_recent_fact(
+                wanted
+            )
+
+            if not match:
+                return (
+                    "I couldn't find a recent memory "
+                    "matching that."
+                )
+
+            removed = self.remove_fact(
+                match
+            )
+
+            if removed:
+                return (
+                    "Okay. I've forgotten that recent memory."
+                )
+
+            return (
+                "I couldn't remove that recent memory."
+            )
+
         forget_phrases = {
             "forget that",
             "forget that happened",
@@ -567,15 +640,45 @@ class RecentMemory:
         if normalised not in forget_phrases:
             return None
 
-        if not self.last_recalled_fact:
+        target = (
+            self.last_recalled_fact
+            or self.last_user_fact
+        )
+
+        if not target:
             return (
                 "I'm not sure which recent memory "
                 "you want me to forget."
             )
 
-        target = self.last_recalled_fact
+        removed = self.remove_fact(
+            target
+        )
 
-        removed = False
+        self.last_recalled_fact = None
+
+        if target is self.last_user_fact:
+            self.last_user_fact = None
+
+        if removed:
+            return (
+                "Okay. I've forgotten that recent memory."
+            )
+
+        return (
+            "I couldn't find that recent memory anymore."
+        )
+
+    def remove_fact(
+        self,
+        target
+    ):
+
+        if not isinstance(
+            target,
+            dict
+        ):
+            return False
 
         for index in range(
             len(self.facts) - 1,
@@ -596,19 +699,50 @@ class RecentMemory:
                 == target.get("source")
             ):
                 del self.facts[index]
-                removed = True
-                break
+                return True
 
-        self.last_recalled_fact = None
+        return False
 
-        if removed:
-            return (
-                "Okay. I've forgotten that recent memory."
+    def find_matching_recent_fact(
+        self,
+        wanted
+    ):
+
+        wanted_tokens = self.tokenise(
+            wanted
+        )
+
+        if not wanted_tokens:
+            return None
+
+        best = None
+        best_score = 0
+
+        for fact in reversed(
+            self.facts
+        ):
+
+            searchable = " ".join([
+                fact.get("subject", ""),
+                fact.get("detail", ""),
+                fact.get("source", "")
+            ])
+
+            fact_tokens = self.tokenise(
+                searchable
             )
 
-        return (
-            "I couldn't find that recent memory anymore."
-        )
+            score = len(
+                wanted_tokens.intersection(
+                    fact_tokens
+                )
+            )
+
+            if score > best_score:
+                best = fact
+                best_score = score
+
+        return best if best_score > 0 else None
 
     def shift_user_perspective(
         self,

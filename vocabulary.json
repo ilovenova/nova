@@ -49,6 +49,55 @@
             ],
             "times_heard": 1,
             "times_used": 0
+        },
+        "i'm done": {
+            "word": "i'm done",
+            "meanings": [
+                {
+                    "meaning": "i'm mentally tired",
+                    "kind": "slang",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "when i say i'm done i mean i'm mentally tired"
+                    ]
+                }
+            ],
+            "times_heard": 1,
+            "times_used": 0
+        },
+        "peak": {
+            "word": "peak",
+            "meanings": [
+                {
+                    "meaning": "really good",
+                    "kind": "slang",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "when i say peak i mean really good",
+                        "forget the phrase peak"
+                    ]
+                }
+            ],
+            "times_heard": 2,
+            "times_used": 0
+        },
+        "slay": {
+            "word": "slay",
+            "meanings": [
+                {
+                    "meaning": "to do something really well",
+                    "kind": "slang",
+                    "confidence": "high",
+                    "source": "user",
+                    "examples": [
+                        "i slay at dancing"
+                    ]
+                }
+            ],
+            "times_heard": 1,
+            "times_used": 0
         }
     },
     "pending_word": "",

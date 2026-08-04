@@ -32,6 +32,7 @@ from memory_editor import MemoryEditor
 from reflection import Reflection
 from understanding import Understanding
 from recent_memory import RecentMemory
+from language_adapter import LanguageAdapter
 
 
 class Brain:
@@ -54,6 +55,7 @@ class Brain:
         self.reflection = Reflection(memory)
         self.understanding = Understanding(memory)
         self.recent_memory = RecentMemory()
+        self.language_adapter = LanguageAdapter()
 
         self.last_user_message = ""
         self.last_nova_reply = ""
@@ -66,15 +68,123 @@ class Brain:
     
     def respond(self, message):
 
-        text = message.lower().strip()
+        unknown_reply_result = (
+            self.language_adapter.handle_unknown_word_reply(
+                message
+            )
+        )
+
+        if unknown_reply_result.get(
+            "handled",
+            False
+        ):
+
+            clarification_reply = (
+                unknown_reply_result.get(
+                    "reply",
+                    ""
+                )
+            )
+
+            interpreted_message = (
+                unknown_reply_result.get(
+                    "interpreted_message",
+                    ""
+                )
+            )
+
+            if interpreted_message:
+
+                continued_reply = self.respond(
+                    interpreted_message
+                )
+
+                if continued_reply:
+                    return (
+                        f"{clarification_reply}\n\n"
+                        f"{continued_reply}"
+                    )
+
+            return self.finish(
+                message,
+                clarification_reply
+            )
+
+        phrase_learning_result = (
+            self.language_adapter.handle_learning_statement(
+                message
+            )
+        )
+
+        if phrase_learning_result.get(
+            "handled",
+            False
+        ):
+            return self.finish(
+                message,
+                phrase_learning_result.get(
+                    "reply",
+                    ""
+                )
+            )
+
+        unknown_language = (
+            self.language_adapter.detect_unknown_language(
+                message
+            )
+        )
+
+        if unknown_language:
+
+            return self.finish(
+                message,
+                unknown_language.get(
+                    "reply",
+                    ""
+                )
+            )
+
+        adapted = self.language_adapter.adapt(
+            message
+        )
+
+        text = adapted.get(
+            "text",
+            message.lower().strip()
+        )
+
+        routed_message = text
 
         self.recent_memory.record_user(
             message
         )
 
+        if self.language_adapter.should_ask_for_clarification(
+            message,
+            adapted
+        ):
+
+            return self.finish(
+                message,
+                random.choice([
+                    (
+                        "I think that might have been a "
+                        "keyboard smash 😭 Are you okay?"
+                    ),
+                    (
+                        "I couldn't work out that message. "
+                        "Did you mean to type something else?"
+                    ),
+                    (
+                        "That one looked a little scrambled. "
+                        "Can you say it again?"
+                    )
+                ])
+            )
+
         recent_memory_reply = (
             self.recent_memory.answer_recent_question(
-                message,
+                routed_message,
                 text
             )
         )
@@ -86,10 +196,13 @@ class Brain:
                 recent_memory_reply
             )
 
-        self.context.observe(message, text)
+        self.context.observe(
+            routed_message,
+            text
+        )
 
         context_result = self.context.respond(
-            message,
+            routed_message,
             text,
             self.pending_follow_up,
             self.activity,
@@ -124,7 +237,7 @@ class Brain:
                 )
 
         understanding_result = self.understanding.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -146,7 +259,7 @@ class Brain:
         ):
 
             result = self.reflection.answer_follow_up(
-                message,
+                routed_message,
                 self.pending_follow_up
             )
 
@@ -162,7 +275,7 @@ class Brain:
                 )
 
         reflection_result = self.reflection.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -178,7 +291,7 @@ class Brain:
             )
 
         memory_edit_result = self.memory_editor.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -200,7 +313,7 @@ class Brain:
         ):
 
             result = self.emotions.answer_follow_up(
-                message,
+                routed_message,
                 self.pending_follow_up
             )
 
@@ -216,7 +329,7 @@ class Brain:
                 )
 
         emotion_result = self.emotions.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -232,7 +345,7 @@ class Brain:
             )
 
         relationship_result = self.relationships.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -250,7 +363,7 @@ class Brain:
             return self.finish(message, reply)
 
         conversation_result = self.conversation.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -268,7 +381,7 @@ class Brain:
             return self.finish(message, reply)
 
         social_result = self.social.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -286,7 +399,7 @@ class Brain:
             return self.finish(message, reply)
 
         activity_result = self.activity.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -304,7 +417,7 @@ class Brain:
             return self.finish(message, reply)
 
         response = self.identity.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -324,7 +437,7 @@ class Brain:
             return self.finish(message, response)
 
         response = self.check_forget_request(
-            message,
+            routed_message,
             text
         )
 
@@ -379,7 +492,7 @@ class Brain:
                 return self.finish(message, response)
 
         world_result = self.world_learning.respond(
-            message,
+            routed_message,
             text
         )
 
@@ -396,7 +509,9 @@ class Brain:
 
             return self.finish(message, reply)
 
-        learning_result = self.learning.learn(message)
+        learning_result = self.learning.learn(
+            routed_message
+        )
 
         if learning_result:
 
@@ -445,6 +560,10 @@ class Brain:
         self.last_nova_reply = reply
 
         self.recent_memory.record_nova(
+            reply
+        )
+
+        self.context.observe_nova_reply(
             reply
         )
 

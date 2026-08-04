@@ -34,6 +34,12 @@ class Context:
         self.last_nova_question = ""
         self.last_nova_question_topic = ""
 
+        self.last_question_shape = ""
+        self.last_question_subject = ""
+
+        self.last_nova_statement = ""
+        self.last_nova_statement_type = ""
+
         self.paused_follow_up = None
         self.paused_topic = ""
 
@@ -383,6 +389,34 @@ class Context:
         if acknowledgement_result:
             return acknowledgement_result
 
+        ellipsis_result = self.handle_contextual_ellipsis(
+            message,
+            text
+        )
+
+        if ellipsis_result:
+            return ellipsis_result
+
+        description_result = (
+            self.handle_experience_description(
+                message,
+                text
+            )
+        )
+
+        if description_result:
+            return description_result
+
+        person_description_result = (
+            self.handle_person_description(
+                message,
+                text
+            )
+        )
+
+        if person_description_result:
+            return person_description_result
+
         generic_continuation_result = (
             self.handle_generic_continuation(
                 message,
@@ -436,6 +470,19 @@ class Context:
 
         if project_result:
             return project_result
+
+        if self.is_direct_new_emotion_statement(
+            text
+        ):
+
+            if pending_follow_up:
+                return self.make_result(
+                    "",
+                    clear_pending=True,
+                    continue_routing=True
+                )
+
+            return None
 
         if self.is_direct_new_request(text):
 
@@ -911,6 +958,409 @@ class Context:
 
         return ""
 
+    # -------------------------------------------------
+    # Contextual ellipsis
+    # -------------------------------------------------
+
+    # -------------------------------------------------
+    # Person-description statements
+    # -------------------------------------------------
+
+    def handle_person_description(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        patterns = [
+            r"^my (friend|best friend|sister|brother|mum|mom|dad|"
+            r"cousin|teacher|classmate) was (?:really )?(.+?)(?: today)?$",
+
+            r"^my (friend|best friend|sister|brother|mum|mom|dad|"
+            r"cousin|teacher|classmate) is (?:really )?(.+?)(?: today)?$",
+
+            r"^(?:a|the) (stranger|teacher|classmate|friend) "
+            r"was (?:really )?(.+?)(?: today)?$",
+
+            r"^(?:a|the) (stranger|teacher|classmate|friend) "
+            r"is (?:really )?(.+?)(?: today)?$"
+        ]
+
+        match = None
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                normalised
+            )
+
+            if match:
+                break
+
+        if not match:
+            return None
+
+        person_type = match.group(
+            1
+        ).strip()
+
+        description = match.group(
+            2
+        ).strip()
+
+        if not person_type or not description:
+            return None
+
+        if normalised.startswith("my "):
+            person_label = f"your {person_type}"
+        else:
+            person_label = f"the {person_type}"
+
+        self.current_person_label = person_label
+        self.current_person = ""
+        self.last_active_topic = (
+            f"{person_label} being {description}"
+        )
+
+        negative_descriptions = {
+            "mean",
+            "annoying",
+            "frustrating",
+            "rude",
+            "unkind",
+            "difficult",
+            "harsh",
+            "upsetting"
+        }
+
+        positive_descriptions = {
+            "kind",
+            "nice",
+            "helpful",
+            "funny",
+            "sweet",
+            "friendly",
+            "patient"
+        }
+
+        if description in negative_descriptions:
+
+            replies = [
+                f"Ahh, {person_label} was {description}? That doesn’t sound nice.",
+                f"That sounds frustrating. {person_label.capitalize()} was {description}.",
+                f"Ugh, {description} is hard to deal with."
+            ]
+
+            if random.random() < 0.35:
+                replies.append(
+                    f"What did {person_label} do?"
+                )
+
+            return self.make_result(
+                random.choice(replies),
+                clear_pending=False
+            )
+
+        if description in positive_descriptions:
+
+            replies = [
+                f"Aw, {person_label} sounds {description}.",
+                f"That’s nice — {description} is a lovely quality.",
+                f"Okay, so {person_label} was {description}."
+            ]
+
+            if random.random() < 0.3:
+                replies.append(
+                    f"What made {person_label} seem {description}?"
+                )
+
+            return self.make_result(
+                random.choice(replies),
+                clear_pending=False
+            )
+
+        return self.make_result(
+            random.choice([
+                f"Okay, so {person_label} was {description}.",
+                f"Ahh, {person_label} seemed {description}.",
+                f"I’m following — {person_label} was {description}."
+            ]),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
+    # Experience-description statements
+    # -------------------------------------------------
+
+    def handle_experience_description(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        patterns = [
+            r"^the (.+?) was (.+)$",
+            r"^the (.+?) is (.+)$",
+            r"^my (.+?) was (.+)$",
+            r"^my (.+?) is (.+)$",
+            r"^that (.+?) was (.+)$",
+            r"^that (.+?) is (.+)$"
+        ]
+
+        match = None
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                normalised
+            )
+
+            if match:
+                break
+
+        if not match:
+            return None
+
+        subject = match.group(
+            1
+        ).strip()
+
+        description = match.group(
+            2
+        ).strip()
+
+        if not subject or not description:
+            return None
+
+        self.last_active_topic = (
+            f"the {subject} being {description}"
+        )
+
+        emotional_descriptions = {
+            "scary": [
+                f"Ohh, the {subject} was scary? That sounds intense.",
+                f"Ahh, so the {subject} actually frightened you.",
+                f"That must have been unsettling if the {subject} felt scary."
+            ],
+            "funny": [
+                f"Okay, so the {subject} was actually funny 😭",
+                f"That sounds like the {subject} gave you a good laugh.",
+                f"Ahh, the {subject} was funny then."
+            ],
+            "hard": [
+                f"That sounds difficult. What made the {subject} hard?",
+                f"Ahh, the {subject} was hard. That can be frustrating.",
+                f"Okay, so the {subject} was a challenge."
+            ],
+            "good": [
+                f"Nice — the {subject} was good.",
+                f"Okayyy, sounds like the {subject} went well.",
+                f"Glad the {subject} was good."
+            ],
+            "bad": [
+                f"Ahh, the {subject} was bad?",
+                f"That doesn’t sound great.",
+                f"Okay, so the {subject} really didn’t go well."
+            ],
+            "exhausting": [
+                f"No wonder you’re tired if the {subject} was exhausting.",
+                f"That sounds draining.",
+                f"Ahh, the {subject} took a lot out of you."
+            ],
+            "annoying": [
+                f"Yeah, that sounds annoying.",
+                f"Ahh, the {subject} was frustrating then.",
+                f"I can see why the {subject} annoyed you."
+            ],
+            "interesting": [
+                f"Ooo, what made the {subject} interesting?",
+                f"Nice — sounds like the {subject} caught your attention.",
+                f"Ahh, the {subject} was interesting then."
+            ]
+        }
+
+        replies = emotional_descriptions.get(
+            description
+        )
+
+        if replies:
+            return self.make_result(
+                random.choice(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        return self.make_result(
+            random.choice([
+                f"Okay, so the {subject} was {description}.",
+                f"Ahh, the {subject} felt {description} to you.",
+                f"I get it — you found the {subject} {description}."
+            ]),
+            clear_pending=False
+        )
+
+    def handle_contextual_ellipsis(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return None
+
+        if str(message).strip().endswith("?"):
+            return None
+
+        # Example:
+        # Nova: What do they like about the rain?
+        # User: the cooling feeling on their skin
+        if (
+            self.current_person_label
+            and self.last_question_shape == "preference_reason"
+        ):
+
+            if not self.starts_with_explicit_subject(
+                normalised
+            ):
+
+                interpreted = (
+                    f"they like {normalised}"
+                )
+
+                self.last_active_topic = (
+                    f"{self.person_topic_phrase()} "
+                    f"liking {normalised}"
+                )
+
+                self.last_question_shape = ""
+                self.last_question_subject = ""
+
+                return self.make_result(
+                    random.choice([
+                        (
+                            f"Ahh, they like "
+                            f"{normalised}. That makes sense."
+                        ),
+                        (
+                            f"Ohh, so it’s "
+                            f"{normalised} they like."
+                        ),
+                        (
+                            f"Okay, I get it — "
+                            f"{normalised} is what they enjoy."
+                        )
+                    ]),
+                    clear_pending=False
+                )
+
+        # Example:
+        # Nova: Why are you tired?
+        # User: because of school
+        if normalised.startswith(
+            "because "
+        ):
+
+            if self.current_emotion:
+                reason = normalised[
+                    len("because "):
+                ].strip()
+
+                if reason:
+                    self.current_emotion_topic = reason
+                    self.last_active_topic = (
+                        f"you feeling "
+                        f"{self.current_emotion} because of "
+                        f"{reason}"
+                    )
+
+                    return self.make_result(
+                        random.choice([
+                            (
+                                f"That makes sense. "
+                                f"{reason} could explain why "
+                                f"you feel {self.current_emotion}."
+                            ),
+                            (
+                                f"Ahh, so {reason} is part "
+                                f"of why you’re "
+                                f"{self.current_emotion}."
+                            )
+                        ]),
+                        clear_pending=False
+                    )
+
+        # Example:
+        # "she's kind" while the active person is the user's friend.
+        if (
+            self.current_person_label
+            and re.match(
+                r"^(she|he|they)(?:'s| is| are) .+",
+                normalised
+            )
+        ):
+
+            trait = re.sub(
+                r"^(she|he|they)(?:'s| is| are)\s+",
+                "",
+                normalised
+            ).strip()
+
+            if trait:
+                self.last_active_topic = (
+                    f"{self.person_topic_phrase()} "
+                    f"being {trait}"
+                )
+
+                return self.make_result(
+                    random.choice([
+                        f"Aw, {self.person_topic_phrase()} sounds {trait}.",
+                        f"That’s nice — {trait} is a lovely quality.",
+                        f"Okay, I’m following. {self.person_topic_phrase()} is {trait}."
+                    ]),
+                    clear_pending=False
+                )
+
+        return None
+
+    def starts_with_explicit_subject(
+        self,
+        text
+    ):
+
+        starters = (
+            "i ",
+            "you ",
+            "he ",
+            "she ",
+            "they ",
+            "we ",
+            "it ",
+            "my ",
+            "your ",
+            "his ",
+            "her ",
+            "their "
+        )
+
+        return text.startswith(
+            starters
+        )
+
     def handle_generic_continuation(
         self,
         message,
@@ -1065,6 +1515,11 @@ class Context:
                 ]
 
                 if random.random() < 0.35:
+                    self.last_question_shape = "preference_reason"
+                    self.last_question_subject = (
+                        self.person_topic_phrase()
+                    )
+
                     replies.append(
                         "What does she like about the rain so much?"
                     )
@@ -1260,6 +1715,10 @@ class Context:
             self.last_nova_question_topic = (
                 self.person_topic_phrase()
             )
+            self.last_question_shape = "reaction"
+            self.last_question_subject = (
+                self.person_topic_phrase()
+            )
 
             return self.make_result(
                 random.choice([
@@ -1271,6 +1730,11 @@ class Context:
             )
 
         if "likes the rain" in lowered or "loves the rain" in lowered:
+            self.last_question_shape = "preference_reason"
+            self.last_question_subject = (
+                self.person_topic_phrase()
+            )
+
             return self.make_result(
                 random.choice([
                     "Ohh, that explains it a little. What do they like about the rain?",
@@ -1331,6 +1795,8 @@ class Context:
         self.last_project_question = "project_change"
         self.last_nova_question = "project_change"
         self.last_nova_question_topic = self.current_project
+        self.last_question_shape = "project_detail"
+        self.last_question_subject = self.current_project
 
         return self.make_result(
             random.choice([
@@ -1484,6 +1950,246 @@ class Context:
         return None
 
     # -------------------------------------------------
+    # NOVA reply continuity
+    # -------------------------------------------------
+
+    def observe_nova_reply(
+        self,
+        reply
+    ):
+
+        clean_reply = str(
+            reply
+        ).strip()
+
+        if not clean_reply:
+            return
+
+        self.last_nova_statement = clean_reply
+        self.last_nova_statement_type = (
+            self.classify_nova_reply(
+                clean_reply
+            )
+        )
+
+    def classify_nova_reply(
+        self,
+        reply
+    ):
+
+        lowered = str(
+            reply
+        ).lower().strip()
+
+        if not lowered:
+            return ""
+
+        if lowered.rstrip().endswith("?"):
+            return "question"
+
+        purpose_groups = {
+            "celebration": [
+                "yess",
+                "you fixed",
+                "we fixed",
+                "it works",
+                "working now",
+                "finally",
+                "you did it",
+                "well done",
+                "proud of"
+            ],
+
+            "sympathy": [
+                "i'm sorry",
+                "i’m sorry",
+                "that sounds difficult",
+                "that sounds hard",
+                "that doesn't sound",
+                "that doesn’t sound",
+                "that sounds upsetting",
+                "that sounds frustrating",
+                "that sounds annoying",
+                "that must have been",
+                "you don't have to explain",
+                "you don’t have to explain"
+            ],
+
+            "supportive_explanation": [
+                "that makes sense",
+                "i understand",
+                "i get it",
+                "i get you",
+                "it can be hard",
+                "you don't have to know",
+                "you don’t have to know",
+                "tiredness can",
+                "that explains",
+                "no wonder",
+                "i'm following",
+                "i’m following",
+                "could explain",
+                "is part of why",
+                "hard to tell",
+                "harder to untangle",
+                "we don't have to force",
+                "we don’t have to force"
+            ],
+
+            "reassurance": [
+                "that's okay",
+                "that’s okay",
+                "that's alright",
+                "that’s alright",
+                "you can be unsure",
+                "take your time",
+                "no pressure",
+                "we can leave",
+                "i'm here",
+                "i’m here"
+            ],
+
+            "agreement": [
+                "exactly",
+                "you're right",
+                "you’re right",
+                "that's true",
+                "that’s true",
+                "i agree",
+                "right —",
+                "right,"
+            ],
+
+            "positive_reaction": [
+                "that's nice",
+                "that’s nice",
+                "sounds good",
+                "glad",
+                "lovely",
+                "nice —",
+                "aw,"
+            ],
+
+            "negative_reaction": [
+                "oh no",
+                "ahh,",
+                "ugh",
+                "annoying",
+                "frustrating",
+                "didn't go well",
+                "didn’t go well"
+            ]
+        }
+
+        for purpose, phrases in purpose_groups.items():
+
+            if any(
+                phrase in lowered
+                for phrase in phrases
+            ):
+                return purpose
+
+        return "statement"
+
+    def acknowledgement_from_last_reply(
+        self,
+        normalised
+    ):
+
+        if not self.last_nova_statement:
+            return None
+
+        agreement_words = {
+            "yeah",
+            "yh",
+            "yes",
+            "right",
+            "exactly",
+            "true",
+            "thats true",
+            "that's true",
+            "that is true",
+            "mhm",
+            "mm",
+            "fr",
+            "for real"
+        }
+
+        if normalised not in agreement_words:
+            return None
+
+        reply_type = self.last_nova_statement_type
+
+        replies_by_type = {
+            "supportive_explanation": [
+                "Yeah.",
+                "Right — that makes sense.",
+                "Exactly.",
+                "Mhm, I get you."
+            ],
+
+            "sympathy": [
+                "Yeah, I get you.",
+                "Mhm.",
+                "Right.",
+                "Yeah."
+            ],
+
+            "reassurance": [
+                "Mhm. No pressure.",
+                "Yeah.",
+                "Exactly — take your time.",
+                "Right."
+            ],
+
+            "celebration": [
+                "Yesss 😭",
+                "Exactlyyy.",
+                "We actually did it.",
+                "Yeahhh 🎉"
+            ],
+
+            "agreement": [
+                "Exactly.",
+                "Right.",
+                "Yeah.",
+                "Mhm."
+            ],
+
+            "positive_reaction": [
+                "Yeah 😊",
+                "Mhm, it is.",
+                "Exactly.",
+                "Right."
+            ],
+
+            "negative_reaction": [
+                "Yeah, honestly.",
+                "Right? 😭",
+                "Mhm.",
+                "Exactly."
+            ],
+
+            "statement": [
+                "Yeah.",
+                "Right.",
+                "Exactly.",
+                "Mhm."
+            ]
+        }
+
+        replies = replies_by_type.get(
+            reply_type
+        )
+
+        if not replies:
+            return None
+
+        return random.choice(
+            replies
+        )
+
+    # -------------------------------------------------
     # Short acknowledgement continuity
     # -------------------------------------------------
 
@@ -1518,6 +2224,20 @@ class Context:
 
         if normalised not in acknowledgement_phrases:
             return None
+
+        last_reply_acknowledgement = (
+            self.acknowledgement_from_last_reply(
+                normalised
+            )
+        )
+
+        if last_reply_acknowledgement:
+            self.last_control_action = "acknowledged"
+
+            return self.make_result(
+                last_reply_acknowledgement,
+                clear_pending=False
+            )
 
         has_active_context = bool(
             pending_follow_up
@@ -1889,6 +2609,15 @@ class Context:
 
         text = message.lower().strip()
 
+        uncertainty_reply = self.answer_uncertain_feeling_reason(
+            message,
+            text,
+            context
+        )
+
+        if uncertainty_reply:
+            return uncertainty_reply
+
         if not self.is_meaningful_statement(text):
             return None
 
@@ -2005,6 +2734,144 @@ class Context:
             f"I understand. I'll remember that you're finding {topic} difficult."
         ])
 
+    def is_direct_new_emotion_statement(
+        self,
+        text
+    ):
+
+        patterns = [
+            r"^i(?:'m| am|m) (?:feeling )?"
+            r"(tired|sad|happy|stressed|worried|scared|upset|"
+            r"excited|proud|bored|angry|annoyed)$",
+
+            r"^i feel "
+            r"(tired|sad|happy|stressed|worried|scared|upset|"
+            r"excited|proud|bored|angry|annoyed)$",
+
+            r"^i(?:'ve| have) been "
+            r"(tired|sad|happy|stressed|worried|scared|upset|"
+            r"excited|proud|bored|angry|annoyed)$",
+
+            r"^i keep feeling "
+            r"(tired|sad|happy|stressed|worried|scared|upset|"
+            r"excited|proud|bored|angry|annoyed)$"
+        ]
+
+        return any(
+            re.match(pattern, text)
+            for pattern in patterns
+        )
+
+    def answer_uncertain_feeling_reason(
+        self,
+        message,
+        text,
+        context
+    ):
+
+        patterns = [
+            r"^i don't know because (.+)$",
+            r"^i dont know because (.+)$",
+            r"^i'm not sure because (.+)$",
+            r"^im not sure because (.+)$",
+            r"^i don't really know(?: because (.+))?$",
+            r"^i dont really know(?: because (.+))?$",
+            r"^idk(?: because (.+))?$"
+        ]
+
+        reason = ""
+        matched = False
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                text
+            )
+
+            if not match:
+                continue
+
+            matched = True
+
+            if match.lastindex and match.group(1):
+                reason = match.group(1).strip()
+
+            break
+
+        if not matched:
+            return None
+
+        feeling = str(
+            context.get(
+                "topic",
+                ""
+            )
+        ).strip()
+
+        if reason:
+            self.memory.add_event(
+                (
+                    f"was unsure why they felt "
+                    f"{feeling}; mentioned: {reason}"
+                ),
+                "today"
+            )
+
+        tired_reasons = {
+            "i'm really tired",
+            "im really tired",
+            "i am really tired",
+            "really tired",
+            "tired"
+        }
+
+        if reason in tired_reasons:
+            return random.choice([
+                (
+                    "That’s okay. Being really tired can "
+                    "make feelings harder to untangle."
+                ),
+                (
+                    "You don’t have to know exactly why "
+                    "right now. Tiredness can blur everything."
+                ),
+                (
+                    "That makes sense. When you’re really "
+                    "tired, it can be hard to tell what’s "
+                    "causing what."
+                )
+            ])
+
+        if reason:
+            return random.choice([
+                (
+                    f"That’s okay. You don’t have to be "
+                    f"certain yet. {reason} might be part "
+                    f"of it."
+                ),
+                (
+                    f"I get that. You’re not sure of the "
+                    f"reason, and {reason} may be affecting "
+                    f"how everything feels."
+                )
+            ])
+
+        return random.choice([
+            (
+                "That’s okay. You don’t have to know the "
+                "reason straight away."
+            ),
+            (
+                "You can be unsure. We don’t have to force "
+                "an explanation."
+            ),
+            (
+                "That’s alright. Sometimes the feeling "
+                "comes before the explanation."
+            )
+        ])
+
     def is_difficulty_statement(self, text):
 
         return text in [
@@ -2097,7 +2964,20 @@ class Context:
                 "yes",
                 "no",
                 "maybe",
-                "sometimes"
+                "sometimes",
+                "everything",
+                "nothing",
+                "school",
+                "work",
+                "sleep",
+                "homework",
+                "people",
+                "family",
+                "friends",
+                "stress",
+                "life",
+                "today",
+                "yesterday"
             ]
 
         vowels = sum(
