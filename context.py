@@ -510,6 +510,22 @@ class Context:
         if story_result:
             return story_result
 
+        reference_result = self.handle_reference_continuation(
+            message,
+            text
+        )
+
+        if reference_result:
+            return reference_result
+
+        ordinary_result = self.handle_ordinary_statement(
+            message,
+            text
+        )
+
+        if ordinary_result:
+            return ordinary_result
+
         generic_continuation_result = (
             self.handle_generic_continuation(
                 message,
@@ -2484,6 +2500,17 @@ class Context:
                 ]
             )
 
+            curiosity_reply = self.story_curiosity_reply(
+                subject=self.person_topic_phrase(),
+                action=f"was {description}",
+                detail=description
+            )
+
+            if curiosity_reply:
+                replies.append(
+                    curiosity_reply
+                )
+
             return self.make_result(
                 self.choose_natural_reply(
                     replies
@@ -2560,13 +2587,15 @@ class Context:
                     "Ahh."
                 ]
 
-            # Curiosity remains optional.
-            if self.should_ask_curiosity(
-                topic=f"{self.person_topic_phrase()} {action}",
-                base_chance=0.20
-            ):
+            curiosity_reply = self.story_curiosity_reply(
+                subject=self.person_topic_phrase(),
+                action=action,
+                detail=action
+            )
+
+            if curiosity_reply:
                 replies.append(
-                    "What happened after that?"
+                    curiosity_reply
                 )
 
             return self.make_result(
@@ -2622,6 +2651,751 @@ class Context:
             )
 
         return None
+
+    # -------------------------------------------------
+    # Contextual curiosity
+    # -------------------------------------------------
+
+    def story_curiosity_reply(
+        self,
+        subject="",
+        action="",
+        detail=""
+    ):
+
+        clean_subject = str(
+            subject
+        ).strip().lower()
+
+        clean_action = str(
+            action
+        ).strip().lower()
+
+        clean_detail = str(
+            detail
+        ).strip().lower()
+
+        topic = " ".join(
+            part
+            for part in [
+                clean_subject,
+                clean_action,
+                clean_detail
+            ]
+            if part
+        ).strip()
+
+        if not topic:
+            return ""
+
+        if not self.should_ask_curiosity(
+            topic=topic,
+            base_chance=0.30
+        ):
+            return ""
+
+        if clean_action in {
+            "watched",
+            "saw"
+        } and any(
+            word in clean_detail
+            for word in [
+                "film",
+                "movie",
+                "show",
+                "series",
+                "tv"
+            ]
+        ):
+            return self.choose_natural_reply([
+                "Ooo, what kind was it?",
+                "Wait, was it any good?",
+                "What were you watching?",
+                "Did you like it?"
+            ])
+
+        if clean_action in {
+            "went",
+            "went for a",
+            "walked"
+        } and any(
+            word in clean_detail
+            for word in [
+                "walk",
+                "park",
+                "outside",
+                "shops",
+                "mall",
+                "town"
+            ]
+        ):
+            return self.choose_natural_reply([
+                "Was it a nice walk?",
+                "Ooo, where did you go?",
+                "Did you enjoy it?",
+                "Was it peaceful?"
+            ])
+
+        if clean_action == "watched" and any(
+            word in clean_detail
+            for word in [
+                "film",
+                "movie",
+                "show",
+                "series"
+            ]
+        ):
+            return self.choose_natural_reply([
+                "Ooo, what kind was it?",
+                "Was it any good?",
+                "Did you like it?",
+                "What did you watch?"
+            ])
+
+        if (
+            clean_action == "went for a"
+            and clean_detail in {
+                "walk",
+                "run"
+            }
+        ):
+            if clean_detail == "walk":
+                return self.choose_natural_reply([
+                    "Was it a nice walk?",
+                    "Where did you go?",
+                    "Was it peaceful?",
+                    "Did you enjoy it?"
+                ])
+
+            return self.choose_natural_reply([
+                "How was the run?",
+                "Did it feel good?",
+                "Was it a long one?",
+                "Where did you run?"
+            ])
+
+        if clean_action in {
+            "made",
+            "cooked"
+        }:
+            return self.choose_natural_reply([
+                "Ooo, what did they make?",
+                "Wait, was it good?",
+                "What kind?",
+                "Did you like it?"
+            ])
+
+        if clean_action in {
+            "bought",
+            "got"
+        }:
+            return self.choose_natural_reply([
+                "Ooo, what did you get?",
+                "Was it something you wanted?",
+                "Wait, show-off moment? 😭 What was it?",
+                "Did you like it?"
+            ])
+
+        if clean_action in {
+            "met",
+            "spoke",
+            "talked"
+        }:
+            return self.choose_natural_reply([
+                "Ooo, how did that go?",
+                "What did you talk about?",
+                "Was it awkward or nice?",
+                "And what happened?"
+            ])
+
+        if any(
+            phrase in clean_action
+            for phrase in [
+                "annoyed",
+                "upset",
+                "frustrated",
+                "made me angry",
+                "was mean",
+                "was rude"
+            ]
+        ):
+            return self.choose_natural_reply([
+                "What did they do?",
+                "Why did that annoy you?",
+                "Wait, what happened?",
+                "Was it something they said?"
+            ])
+
+        if any(
+            phrase in clean_action
+            for phrase in [
+                "apologised",
+                "apologized"
+            ]
+        ):
+            return self.choose_natural_reply([
+                "Did the apology help?",
+                "Did you believe them?",
+                "What did they say?",
+                "Did things feel better after?"
+            ])
+
+        if clean_subject in {
+            "school",
+            "work",
+            "the day",
+            "today",
+            "yesterday"
+        }:
+            return self.choose_natural_reply([
+                "What happened?",
+                "Was it one thing or just the whole day?",
+                "What made it feel like that?",
+                "Do you want to tell me about it?"
+            ])
+
+        return self.choose_natural_reply([
+            "And then?",
+            "What happened?",
+            "How did you feel about it?",
+            "Was it good?"
+        ])
+
+    def attach_story_curiosity(
+        self,
+        replies,
+        subject="",
+        action="",
+        detail=""
+    ):
+
+        reply_pool = list(
+            replies
+        )
+
+        curiosity_reply = self.story_curiosity_reply(
+            subject=subject,
+            action=action,
+            detail=detail
+        )
+
+        if curiosity_reply:
+            reply_pool.append(
+                curiosity_reply
+            )
+
+        return reply_pool
+
+    # -------------------------------------------------
+    # Event-object reference understanding
+    # -------------------------------------------------
+
+    def infer_recent_object(
+        self
+    ):
+
+        proposition = str(
+            self.active_proposition
+        ).strip().lower()
+
+        if not proposition:
+            return ""
+
+        patterns = [
+            r"^you watched (.+)$",
+            r"^you saw (.+)$",
+            r"^you bought (.+)$",
+            r"^you read (.+)$",
+            r"^you ate (.+)$",
+            r"^you made (.+)$",
+            r"^you found (.+)$",
+            r"^you tried (.+)$",
+            r"^you finished (.+)$",
+            r"^you finishing (.+)$",
+            r"^your .+? made (.+)$",
+            r"^your .+? bought (.+)$",
+            r"^your .+? gave you (.+)$",
+            r"^your .+? showed you (.+)$"
+        ]
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                proposition
+            )
+
+            if not match:
+                continue
+
+            recent_object = match.group(
+                1
+            ).strip()
+
+            if recent_object:
+                return recent_object
+
+        return ""
+
+    def handle_reference_continuation(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return None
+
+        if str(message).strip().endswith("?"):
+            return None
+
+        reference_match = re.match(
+            (
+                r"^(it|that|this) "
+                r"(?:was|is|has been) "
+                r"(?:really |very |quite |so )?(.+)$"
+            ),
+            normalised
+        )
+
+        if not reference_match:
+            return None
+
+        description = reference_match.group(
+            2
+        ).strip()
+
+        if not description:
+            return None
+
+        recent_object = self.infer_recent_object()
+
+        if not recent_object:
+
+            if self.last_story_subject:
+                recent_object = self.last_story_subject
+
+            elif self.last_active_topic:
+                recent_object = self.last_active_topic
+
+        if not recent_object:
+            return None
+
+        self.set_active_proposition(
+            f"{recent_object} being {description}"
+        )
+
+        negative_descriptions = {
+            "strange",
+            "weird",
+            "scary",
+            "creepy",
+            "bad",
+            "awful",
+            "horrible",
+            "boring",
+            "difficult",
+            "hard",
+            "expensive",
+            "annoying",
+            "frustrating",
+            "confusing",
+            "sad"
+        }
+
+        positive_descriptions = {
+            "good",
+            "nice",
+            "great",
+            "amazing",
+            "funny",
+            "fun",
+            "interesting",
+            "cheap",
+            "easy",
+            "beautiful",
+            "cute",
+            "tiny",
+            "lovely"
+        }
+
+        if description in {
+            "strange",
+            "weird"
+        }:
+            replies = [
+                f"Ohh, the {recent_object} was {description}?",
+                f"Wait, {description} how?",
+                "Okay, now I’m curious 😭",
+                f"Ahh, so the {recent_object} was a bit weird."
+            ]
+
+        elif description in negative_descriptions:
+            replies = [
+                f"Ahh, the {recent_object} was {description}.",
+                f"Yeah, that sounds {description}.",
+                "Ugh, not ideal.",
+                "Mhm, I get you."
+            ]
+
+        elif description in positive_descriptions:
+            replies = [
+                f"Ohh, the {recent_object} was {description}.",
+                "Ooo, nice.",
+                f"Okayyy, {description}.",
+                "Mhm, love that."
+            ]
+
+        else:
+            replies = [
+                f"Ohh, the {recent_object} was {description}.",
+                f"Ahh, {description}.",
+                "Okay, I’m following.",
+                "Mhm, got you."
+            ]
+
+        curiosity_reply = self.story_curiosity_reply(
+            subject=recent_object,
+            action=f"was {description}",
+            detail=description
+        )
+
+        if curiosity_reply:
+            replies.append(
+                curiosity_reply
+            )
+        else:
+            replies = [
+                reply
+                for reply in replies
+                if not reply.endswith("?")
+            ] or replies
+
+        return self.make_result(
+            self.choose_natural_reply(
+                replies
+            ),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
+    # Broad ordinary conversation
+    # -------------------------------------------------
+
+    def handle_ordinary_statement(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return None
+
+        if str(message).strip().endswith("?"):
+            return None
+
+        description_match = re.match(
+            (
+                r"^(school|work|the bus|the train|the weather|"
+                r"today|yesterday|dinner|lunch|breakfast|"
+                r"the lesson|the class|the day|the trip|"
+                r"the film|the movie|the show|the game) "
+                r"(was|is|has been) (.+)$"
+            ),
+            normalised
+        )
+
+        if description_match:
+
+            subject = description_match.group(1).strip()
+            description = description_match.group(3).strip()
+
+            self.set_active_proposition(
+                f"{subject} being {description}"
+            )
+
+            negative_words = {
+                "exhausting", "horrible", "awful", "bad",
+                "late", "stressful", "boring", "difficult",
+                "hard", "annoying", "frustrating", "terrible"
+            }
+
+            positive_words = {
+                "good", "nice", "great", "fun", "amazing",
+                "lovely", "interesting", "easy", "calm",
+                "relaxing"
+            }
+
+            if any(word in description for word in negative_words):
+                replies = [
+                    f"Ugh, {description}.",
+                    f"Yeah, that sounds {description}.",
+                    "Ahh, not ideal.",
+                    "Mhm, I get you."
+                ]
+
+            elif any(word in description for word in positive_words):
+                replies = [
+                    "Ooo, nice.",
+                    f"Okayyy, {description}.",
+                    "That sounds good.",
+                    "Mhm, love that."
+                ]
+
+            else:
+                replies = [
+                    f"Ohh, {description}.",
+                    "Okay, I’m following.",
+                    "Mhm, got you.",
+                    "Ahh."
+                ]
+
+            curiosity_reply = self.story_curiosity_reply(
+                subject=subject,
+                action=f"was {description}",
+                detail=description
+            )
+
+            if curiosity_reply:
+                replies.append(
+                    curiosity_reply
+                )
+
+            return self.make_result(
+                self.choose_natural_reply(replies),
+                clear_pending=False
+            )
+
+        finished_match = re.match(
+            (
+                r"^i(?:'ve| have|'m| am|m)? "
+                r"(?:just )?(?:finished|done with|completed) (.+)$"
+            ),
+            normalised
+        )
+
+        if finished_match:
+
+            finished_thing = finished_match.group(1).strip()
+
+            self.set_active_proposition(
+                f"you finishing {finished_thing}"
+            )
+
+            replies = [
+                "Niceee, done.",
+                "Okayyy, one less thing.",
+                "Mhm, finished at last.",
+                f"Ooo, how did {finished_thing} go?"
+            ]
+
+            if not self.should_ask_curiosity(
+                topic=f"finished {finished_thing}",
+                base_chance=0.28
+            ):
+                replies = [
+                    reply for reply in replies
+                    if not reply.endswith("?")
+                ]
+
+            return self.make_result(
+                self.choose_natural_reply(replies),
+                clear_pending=False
+            )
+
+        ongoing_match = re.match(
+            (
+                r"^i(?:'ve| have) been (.+?)(?: all day|"
+                r" all afternoon| all evening| for hours|"
+                r" since .+)?$"
+            ),
+            normalised
+        )
+
+        if ongoing_match:
+
+            activity = ongoing_match.group(1).strip()
+
+            self.set_active_proposition(
+                f"you having been {activity}"
+            )
+
+            return self.make_result(
+                self.choose_natural_reply([
+                    f"Ohh, you’ve been {activity} for a while then.",
+                    "Okayyy, that’s been most of your day.",
+                    "Mhm, proper long session.",
+                    "Ahh, I get you."
+                ]),
+                clear_pending=False
+            )
+
+        person_action_match = re.match(
+            (
+                r"^my (mum|mom|dad|sister|brother|friend|"
+                r"best friend|teacher|classmate|cousin) "
+                r"(.+)$"
+            ),
+            normalised
+        )
+
+        if person_action_match:
+
+            relationship = person_action_match.group(1).strip()
+            action = person_action_match.group(2).strip()
+
+            if relationship == "mom":
+                relationship = "mum"
+
+            person_label = f"your {relationship}"
+
+            self.current_person_label = person_label
+            self.last_story_subject = person_label
+            self.last_story_action = action
+
+            self.set_active_proposition(
+                f"{person_label} {action}"
+            )
+
+            replies = self.attach_story_curiosity(
+                [
+                    "Ohh, okay.",
+                    "Mhm, I’m following.",
+                    "Ahh, got you.",
+                    "Okayyy.",
+                    "Wait 😭"
+                ],
+                subject=person_label,
+                action=action,
+                detail=action
+            )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        personal_event_match = re.match(
+            (
+                r"^i (went|bought|saw|met|visited|found|lost|"
+                r"made|ate|watched|read|heard|tried|walked|"
+                r"ran|swam|hiked|cycled) (.+)$"
+            ),
+            normalised
+        )
+
+        if personal_event_match:
+
+            action = personal_event_match.group(1).strip()
+            detail = personal_event_match.group(2).strip()
+
+            if action == "went" and detail.startswith("for a "):
+                detail = detail[len("for a "):].strip()
+                action = "went for a"
+
+            self.set_active_proposition(
+                f"you {action} {detail}"
+            )
+
+            replies = self.attach_story_curiosity(
+                [
+                    "Ohh, okay.",
+                    "Ooo.",
+                    "Mhm, tell me.",
+                    "Okayyy.",
+                    "Wait 😭"
+                ],
+                subject="you",
+                action=action,
+                detail=detail
+            )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        return None
+
+    # -------------------------------------------------
+    # Last-chance conversation repair
+    # -------------------------------------------------
+
+    def graceful_repair(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return "Mhm?"
+
+        pronoun_match = re.match(
+            r"^(she|he|they|her|him|them)\b(.*)$",
+            normalised
+        )
+
+        if pronoun_match and self.current_person_label:
+
+            remainder = pronoun_match.group(2).strip()
+
+            if remainder:
+                return self.choose_natural_reply([
+                    f"Wait — is this still about {self.person_topic_phrase()}?",
+                    f"Do you mean {self.person_topic_phrase()}?",
+                    "I think I’m following, but say that last bit again?"
+                ])
+
+        if (
+            self.active_proposition
+            and len(normalised.split()) <= 8
+        ):
+            return self.choose_natural_reply([
+                "Wait, how does that connect to what you just said?",
+                "I think I lost the last bit — say it another way?",
+                "Mhm, I’m nearly with you. What do you mean there?"
+            ])
+
+        words = [
+            word
+            for word in re.findall(r"[a-z']+", normalised)
+            if word not in {
+                "i", "you", "the", "a", "an", "it", "that",
+                "this", "and", "but", "so", "is", "was", "are",
+                "were", "to", "of", "in", "on", "my", "your"
+            }
+        ]
+
+        if words:
+            topic = " ".join(words[:4])
+
+            return self.choose_natural_reply([
+                f"Wait, what do you mean about {topic}?",
+                f"I caught the bit about {topic}, but not the whole thought.",
+                "Say that again in a different way? I don’t want to guess."
+            ])
+
+        return self.choose_natural_reply([
+            "Wait, say that again?",
+            "I lost the thread for a second.",
+            "Mhm? What do you mean?"
+        ])
 
     def handle_generic_continuation(
         self,

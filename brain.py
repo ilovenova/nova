@@ -172,29 +172,21 @@ class Brain:
             message
         )
 
-        # -----------------------------------------
-        # Relationship memory facts
-        # -----------------------------------------
-
         if memory_fact_rewritten:
 
-            world_result = self.world_learning.respond(
-                routed_message,
-                text
+            relationship_result = (
+                self.store_relationship_memory_fact(
+                    routed_message,
+                    text
+                )
             )
 
-            if world_result:
-
-                self.pending_follow_up = (
-                    world_result.get("follow_up")
-                )
+            if relationship_result:
+                self.pending_follow_up = None
 
                 return self.finish(
                     message,
-                    world_result.get(
-                        "reply",
-                        "Got it. I'll remember that."
-                    )
+                    relationship_result
                 )
 
         if self.language_adapter.should_ask_for_clarification(
@@ -596,20 +588,166 @@ class Brain:
         if response:
             return self.finish(message, response)
 
-        response = random.choice([
-            "I'm not completely sure how to respond to that yet, but I'm listening.",
-            "I understand some of that, but I haven't learned the best response yet.",
-            "Hmm... I'm still figuring out messages like that.",
-            "I'm not sure what you need from me there, but you can tell me more."
+        response = self.context.graceful_repair(
+            routed_message,
+            text
+        )
+
+        return self.finish(
+            message,
+            response
+        )
+
+    # -------------------------------------------------
+    # Relationship memory facts
+    # -------------------------------------------------
+
+    def store_relationship_memory_fact(
+        self,
+        message,
+        text
+    ):
+
+        statement = str(
+            text
+        ).strip().rstrip(".!")
+
+        if not statement:
+            return ""
+
+        subject = ""
+
+        possessive_match = re.match(
+            r"^my (.+?)'s (.+)$",
+            statement
+        )
+
+        labelled_match = re.match(
+            r"^my (.+?):\s*(.+)$",
+            statement
+        )
+
+        if possessive_match:
+            relationship = possessive_match.group(
+                1
+            ).strip()
+
+            subject = f"my {relationship}"
+
+        elif labelled_match:
+            relationship = labelled_match.group(
+                1
+            ).strip()
+
+            subject = f"my {relationship}"
+
+        else:
+            subject_match = re.match(
+                r"^(my [a-z ]+?)(?: is| was| has| likes| dislikes) ",
+                statement
+            )
+
+            if subject_match:
+                subject = subject_match.group(
+                    1
+                ).strip()
+
+        if not subject:
+            return ""
+
+        self.memory.add_knowledge_item(
+            statement=statement,
+            subject=subject,
+            knowledge_type="fact",
+            source="user",
+            confidence="high",
+            verified=False,
+            notes=(
+                "Saved after an explicit relationship "
+                "memory request."
+            )
+        )
+
+        spoken_subject = subject
+
+        if spoken_subject.startswith(
+            "my "
+        ):
+            spoken_subject = (
+                "your "
+                + spoken_subject[3:]
+            )
+
+        return random.choice([
+            f"Got it. I'll remember that about {spoken_subject}.",
+            f"Okay — I've saved that about {spoken_subject}.",
+            f"Got you. I'll keep that about {spoken_subject}."
         ])
 
-        return self.finish(message, response)
+    # -------------------------------------------------
+    # Perspective in spoken recall
+    # -------------------------------------------------
+
+    def shift_recall_perspective(
+        self,
+        reply
+    ):
+
+        spoken = str(reply)
+
+        recall_starters = (
+            "From what user taught me, ",
+            "From what the user taught me, ",
+            "You taught me that ",
+            "I remember that ",
+            "What I know is "
+        )
+
+        if not spoken.startswith(recall_starters):
+            return spoken
+
+        replacements = [
+            (r"\bmy best friend\b", "your best friend"),
+            (r"\bmy sister\b", "your sister"),
+            (r"\bmy brother\b", "your brother"),
+            (r"\bmy teacher\b", "your teacher"),
+            (r"\bmy friend\b", "your friend"),
+            (r"\bmy mum\b", "your mum"),
+            (r"\bmy mom\b", "your mum"),
+            (r"\bmy dad\b", "your dad"),
+            (r"\bmy cousin\b", "your cousin"),
+            (r"\bmy classmate\b", "your classmate")
+        ]
+
+        for pattern, replacement in replacements:
+            spoken = re.sub(
+                pattern,
+                replacement,
+                spoken,
+                flags=re.IGNORECASE
+            )
+
+        spoken = spoken.replace(
+            "From what user taught me, ",
+            "From what you've taught me, "
+        )
+
+        spoken = spoken.replace(
+            "From what the user taught me, ",
+            "From what you've taught me, "
+        )
+
+        return spoken
 
     # -------------------------------------------------
     # Save current conversation context
     # -------------------------------------------------
 
     def finish(self, message, reply):
+
+        reply = self.shift_recall_perspective(
+            reply
+        )
 
         reply = self.habits.apply(
             message,

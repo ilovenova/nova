@@ -142,6 +142,19 @@
             "created_at": "2026-08-04T21:12:40",
             "updated_at": "2026-08-04T21:12:40",
             "times_recalled": 0
+        },
+        {
+            "id": "knowledge_14",
+            "statement": "my sister's name is annie",
+            "subject": "my sister",
+            "type": "fact",
+            "source": "user",
+            "confidence": "high",
+            "verified": false,
+            "notes": "Saved after an explicit relationship memory request.",
+            "created_at": "2026-08-04T21:54:08",
+            "updated_at": "2026-08-04T21:54:08",
+            "times_recalled": 2
         }
     ],
     "curiosities": [
@@ -173,6 +186,6 @@
             "updated_at": "2026-08-04T21:23:31"
         }
     ],
-    "next_item_id": 14,
+    "next_item_id": 15,
     "next_curiosity_id": 7
 }
