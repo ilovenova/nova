@@ -155,9 +155,47 @@ class Brain:
 
         routed_message = text
 
+        original_text = text
+
+        routed_message, text = (
+            self.context.rewrite_pending_memory_fact(
+                routed_message,
+                text
+            )
+        )
+
+        memory_fact_rewritten = (
+            original_text != text
+        )
+
         self.recent_memory.record_user(
             message
         )
+
+        # -----------------------------------------
+        # Relationship memory facts
+        # -----------------------------------------
+
+        if memory_fact_rewritten:
+
+            world_result = self.world_learning.respond(
+                routed_message,
+                text
+            )
+
+            if world_result:
+
+                self.pending_follow_up = (
+                    world_result.get("follow_up")
+                )
+
+                return self.finish(
+                    message,
+                    world_result.get(
+                        "reply",
+                        "Got it. I'll remember that."
+                    )
+                )
 
         if self.language_adapter.should_ask_for_clarification(
             message,
@@ -235,6 +273,28 @@ class Brain:
                     message,
                     context_result.get("reply", "")
                 )
+
+        knowledge_question = (
+            self.world_learning.check_knowledge_question(
+                text
+            )
+        )
+
+        if knowledge_question:
+
+            self.pending_follow_up = (
+                knowledge_question.get(
+                    "follow_up"
+                )
+            )
+
+            return self.finish(
+                message,
+                knowledge_question.get(
+                    "reply",
+                    ""
+                )
+            )
 
         understanding_result = self.understanding.respond(
             routed_message,

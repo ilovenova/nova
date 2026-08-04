@@ -49,6 +49,12 @@ class Context:
 
         self.recent_natural_replies = []
 
+        self.last_story_action = ""
+        self.last_story_subject = ""
+        self.ambiguous_people = []
+
+        self.pending_memory_person = ""
+
         self.paused_follow_up = None
         self.paused_topic = ""
 
@@ -113,6 +119,34 @@ class Context:
             "my classmate ": "your classmate"
         }
 
+        mentioned_people = []
+
+        for prefix, label in relationship_prefixes.items():
+
+            phrase = prefix.strip()
+
+            if re.search(
+                r"(?<![a-z])"
+                + re.escape(phrase)
+                + r"(?![a-z])",
+                text
+            ):
+                mentioned_people.append(label)
+
+        unique_people = []
+
+        for label in mentioned_people:
+
+            if label not in unique_people:
+                unique_people.append(label)
+
+        if len(unique_people) > 1:
+            self.ambiguous_people = unique_people
+
+        elif len(unique_people) == 1:
+            # A clear newly named person resolves older ambiguity.
+            self.ambiguous_people = []
+
         for prefix, label in relationship_prefixes.items():
 
             if not text.startswith(prefix):
@@ -139,6 +173,18 @@ class Context:
 
             self.last_person_message = message.strip()
             self.person_message_pending = True
+
+            clean_remainder = self.normalise_control_text(
+                remainder
+            )
+
+            if clean_remainder:
+                self.last_story_subject = label
+                self.last_story_action = clean_remainder
+
+                self.set_active_proposition(
+                    f"{label} {clean_remainder}"
+                )
 
             return True
 
@@ -387,6 +433,26 @@ class Context:
 
         if control_result:
             return control_result
+
+        memory_clarification_result = (
+            self.handle_incomplete_memory_request(
+                message,
+                text
+            )
+        )
+
+        if memory_clarification_result:
+            return memory_clarification_result
+
+        everyday_activity_result = (
+            self.handle_everyday_activity(
+                message,
+                text
+            )
+        )
+
+        if everyday_activity_result:
+            return everyday_activity_result
 
         acknowledgement_result = (
             self.handle_short_acknowledgement(
@@ -1007,6 +1073,428 @@ class Context:
     # -------------------------------------------------
 
     # -------------------------------------------------
+    # Incomplete memory requests
+    # -------------------------------------------------
+
+    def rewrite_pending_memory_fact(
+        self,
+        message,
+        text
+    ):
+
+        person = str(
+            self.pending_memory_person
+        ).strip()
+
+        if not person:
+            return message, text
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return message, text
+
+        # A new command means the user did not provide the fact yet.
+        command_starters = (
+            "remember ",
+            "forget ",
+            "what do ",
+            "who is ",
+            "change ",
+            "never mind",
+            "not now"
+        )
+
+        if normalised.startswith(
+            command_starters
+        ):
+            return message, text
+
+        replacements = [
+            (
+                r"^her name is (.+)$",
+                f"my {person}'s name is "
+            ),
+            (
+                r"^his name is (.+)$",
+                f"my {person}'s name is "
+            ),
+            (
+                r"^their name is (.+)$",
+                f"my {person}'s name is "
+            ),
+            (
+                r"^she is (.+)$",
+                f"my {person} is "
+            ),
+            (
+                r"^she's (.+)$",
+                f"my {person} is "
+            ),
+            (
+                r"^he is (.+)$",
+                f"my {person} is "
+            ),
+            (
+                r"^he's (.+)$",
+                f"my {person} is "
+            ),
+            (
+                r"^they are (.+)$",
+                f"my {person} is "
+            ),
+            (
+                r"^they're (.+)$",
+                f"my {person} is "
+            )
+        ]
+
+        for pattern, prefix in replacements:
+
+            match = re.match(
+                pattern,
+                normalised
+            )
+
+            if not match:
+                continue
+
+            detail = match.group(
+                1
+            ).strip()
+
+            rewritten = (
+                prefix
+                + detail
+            )
+
+            self.pending_memory_person = ""
+
+            return rewritten, rewritten
+
+        # If the user provides a full fact, attach the relationship
+        # unless it is already explicitly present.
+        if (
+            len(normalised.split()) >= 2
+            and f"my {person}" not in normalised
+        ):
+            rewritten = (
+                f"my {person}: "
+                f"{normalised}"
+            )
+
+            self.pending_memory_person = ""
+
+            return rewritten, rewritten
+
+        self.pending_memory_person = ""
+
+        return message, text
+
+    def handle_incomplete_memory_request(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        patterns = [
+            r"^remember my (friend|best friend|sister|brother|mum|mom|"
+            r"dad|cousin|teacher|classmate)$",
+
+            r"^remember the (friend|sister|brother|teacher|classmate|"
+            r"person|stranger)$",
+
+            r"^remember that person$"
+        ]
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                normalised
+            )
+
+            if not match:
+                continue
+
+            person = (
+                match.group(1)
+                if match.lastindex
+                else "person"
+            )
+
+            if person == "mom":
+                person = "mum"
+
+            self.pending_memory_person = person
+
+            return self.make_result(
+                self.choose_natural_reply([
+                    f"What about your {person} should I remember?",
+                    f"Okay — what do you want me to remember about your {person}?",
+                    f"Tell me the part about your {person} you want me to keep."
+                ]),
+                clear_pending=False
+            )
+
+        return None
+
+    # -------------------------------------------------
+    # Everyday activity understanding
+    # -------------------------------------------------
+
+    def handle_everyday_activity(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        activity_patterns = [
+            (
+                "watching tv",
+                [
+                    r"^i(?:'m| am|m) (?:just )?watching (?:tv|television)$",
+                    r"^i(?:'m| am|m) (?:just )?watching (?:tv|television) "
+                    r"(?:right now|at the moment)$"
+                ]
+            ),
+            (
+                "chilling",
+                [
+                    r"^i(?:'m| am|m) (?:just )?chilling$",
+                    r"^i(?:'m| am|m) (?:just )?chilling "
+                    r"(?:right now|at the moment)$",
+                    r"^i(?:'m| am|m) relaxing$"
+                ]
+            ),
+            (
+                "scrolling",
+                [
+                    r"^i(?:'m| am|m) (?:just )?scrolling$",
+                    r"^i(?:'m| am|m) (?:just )?scrolling "
+                    r"(?:right now|at the moment)$"
+                ]
+            ),
+            (
+                "reading",
+                [
+                    r"^i(?:'m| am|m) (?:just )?reading$",
+                    r"^i(?:'m| am|m) reading (.+)$"
+                ]
+            ),
+            (
+                "gaming",
+                [
+                    r"^i(?:'m| am|m) (?:just )?(?:gaming|playing a game|"
+                    r"playing games)$",
+                    r"^i(?:'m| am|m) playing (.+)$"
+                ]
+            ),
+            (
+                "studying",
+                [
+                    r"^i(?:'m| am|m) (?:just )?studying$",
+                    r"^i(?:'m| am|m) studying (.+)$",
+                    r"^i(?:'m| am|m) doing homework$"
+                ]
+            ),
+            (
+                "eating",
+                [
+                    r"^i(?:'m| am|m) (?:just )?eating$",
+                    r"^i(?:'m| am|m) eating (.+)$"
+                ]
+            ),
+            (
+                "cooking",
+                [
+                    r"^i(?:'m| am|m) (?:just )?cooking$",
+                    r"^i(?:'m| am|m) cooking (.+)$"
+                ]
+            ),
+            (
+                "walking",
+                [
+                    r"^i(?:'m| am|m) (?:just )?walking$",
+                    r"^i(?:'m| am|m) walking (.+)$"
+                ]
+            ),
+            (
+                "listening to music",
+                [
+                    r"^i(?:'m| am|m) (?:just )?listening to music$",
+                    r"^i(?:'m| am|m) listening to (.+)$"
+                ]
+            )
+        ]
+
+        matched_activity = ""
+        detail = ""
+
+        for activity_name, patterns in activity_patterns:
+
+            for pattern in patterns:
+
+                match = re.match(
+                    pattern,
+                    normalised
+                )
+
+                if not match:
+                    continue
+
+                matched_activity = activity_name
+
+                if match.lastindex:
+                    detail = str(
+                        match.group(
+                            match.lastindex
+                        )
+                    ).strip()
+
+                break
+
+            if matched_activity:
+                break
+
+        if not matched_activity:
+            return None
+
+        self.last_active_topic = (
+            detail
+            or matched_activity
+        )
+
+        self.set_active_proposition(
+            f"you {matched_activity}"
+            + (
+                f" {detail}"
+                if detail
+                and detail not in matched_activity
+                else ""
+            )
+        )
+
+        response_groups = {
+            "watching tv": [
+                "Ooo, what are you watching?",
+                "Nice, little TV moment.",
+                "Okayyy, chill evening then.",
+                "Mhm, enjoy."
+            ],
+            "chilling": [
+                "As you should 😭",
+                "Niceee.",
+                "Okay, proper chill time.",
+                "Mhm, enjoy the peace."
+            ],
+            "scrolling": [
+                "The classic scroll 😭",
+                "Same energy honestly.",
+                "Okayyy, just wandering through the internet.",
+                "Mhm."
+            ],
+            "reading": [
+                "Ooo, nice.",
+                "What are you reading?",
+                "Okayyy, quiet moment.",
+                "Mhm, enjoy."
+            ],
+            "gaming": [
+                "Ooo, what are you playing?",
+                "Niceee.",
+                "Okay, game time.",
+                "Hope you’re winning 😭"
+            ],
+            "studying": [
+                "Okayyy, productive.",
+                "What are you studying?",
+                "You’ve got this.",
+                "Mhm, study mode."
+            ],
+            "eating": [
+                "Ooo, what are you eating?",
+                "Niceee, enjoy.",
+                "Okayyy.",
+                "Mhm, food time."
+            ],
+            "cooking": [
+                "Ooo, what are you making?",
+                "Okay chef 😭",
+                "Niceee.",
+                "Mhm, kitchen time."
+            ],
+            "walking": [
+                "Nice, little walk.",
+                "Okayyy, fresh air moment.",
+                "Mhm, enjoy.",
+                "Where are you walking?"
+            ],
+            "listening to music": [
+                "Ooo, what are you listening to?",
+                "Niceee.",
+                "Okay, music moment.",
+                "Mhm, enjoy."
+            ]
+        }
+
+        replies = list(
+            response_groups.get(
+                matched_activity,
+                [
+                    "Ohh, nice.",
+                    "Okayyy.",
+                    "Mhm, enjoy."
+                ]
+            )
+        )
+
+        # Questions remain occasional rather than automatic.
+        question_replies = [
+            reply
+            for reply in replies
+            if reply.endswith("?")
+        ]
+
+        non_question_replies = [
+            reply
+            for reply in replies
+            if not reply.endswith("?")
+        ]
+
+        if not self.should_ask_curiosity(
+            topic=matched_activity,
+            base_chance=0.32
+        ):
+            replies = (
+                non_question_replies
+                or replies
+            )
+
+        elif question_replies:
+            replies = (
+                question_replies
+                + non_question_replies
+            )
+
+        return self.make_result(
+            self.choose_natural_reply(
+                replies
+            ),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
     # Mixed acknowledgements
     # -------------------------------------------------
 
@@ -1578,6 +2066,37 @@ class Context:
         if str(message).strip().endswith("?"):
             return None
 
+        ambiguous_pronoun_match = re.match(
+            r"^(she|he|they)(?:'s| is|'re| are| was| were) (.+)$",
+            normalised
+        )
+
+        if (
+            ambiguous_pronoun_match
+            and len(self.ambiguous_people) > 1
+        ):
+
+            first_person = self.ambiguous_people[0]
+            second_person = self.ambiguous_people[1]
+
+            return self.make_result(
+                self.choose_natural_reply([
+                    (
+                        f"Wait — do you mean "
+                        f"{first_person} or {second_person}?"
+                    ),
+                    (
+                        f"Which one was annoyed — "
+                        f"{first_person} or {second_person}?"
+                    ),
+                    (
+                        f"Do you mean {first_person}, "
+                        f"or {second_person}?"
+                    )
+                ]),
+                clear_pending=False
+            )
+
         # Example:
         # Nova: What do they like about the rain?
         # User: the cooling feeling on their skin
@@ -1701,12 +2220,37 @@ class Context:
                     f"being {trait}"
                 )
 
+                physical_traits = {
+                    "tall",
+                    "short",
+                    "young",
+                    "old",
+                    "blonde",
+                    "brunette",
+                    "quiet",
+                    "loud"
+                }
+
+                if trait in physical_traits:
+                    replies = [
+                        f"Ohh, {trait}.",
+                        "Okay, I’m picturing them a little better now.",
+                        "Right, got you.",
+                        "Mhm."
+                    ]
+
+                else:
+                    replies = [
+                        f"Ohh, {trait}.",
+                        f"Okay, I’m following.",
+                        f"Right, got you.",
+                        f"Mhm."
+                    ]
+
                 return self.make_result(
-                    random.choice([
-                        f"Aw, {self.person_topic_phrase()} sounds {trait}.",
-                        f"That’s nice — {trait} is a lovely quality.",
-                        f"Okay, I’m following. {self.person_topic_phrase()} is {trait}."
-                    ]),
+                    self.choose_natural_reply(
+                        replies
+                    ),
                     clear_pending=False
                 )
 
@@ -1776,6 +2320,62 @@ class Context:
         if str(message).strip().endswith("?"):
             return None
 
+        if normalised in {
+            "nothing much",
+            "nothing else",
+            "thats all",
+            "that's all",
+            "that was it",
+            "thats it",
+            "that's it"
+        }:
+            return self.make_result(
+                self.choose_natural_reply([
+                    "Fair enough.",
+                    "Mhm, got you.",
+                    "Okay, that was the story then.",
+                    "Right 😭"
+                ]),
+                clear_pending=False
+            )
+
+        modifier_patterns = [
+            r"^(really|very|quite|so) (.+)$",
+            r"^(loudly|quietly|slowly|quickly|angrily|nicely)$"
+        ]
+
+        if self.last_story_action:
+
+            modifier = ""
+
+            for pattern in modifier_patterns:
+
+                modifier_match = re.match(
+                    pattern,
+                    normalised
+                )
+
+                if modifier_match:
+                    modifier = normalised
+                    break
+
+            if modifier:
+
+                self.set_active_proposition(
+                    f"{self.last_story_subject} "
+                    f"{self.last_story_action} {modifier}"
+                )
+
+                return self.make_result(
+                    self.choose_natural_reply([
+                        f"Ohh, {modifier}.",
+                        "Yeah, that makes it sound even more intense.",
+                        "Ahh, I get you.",
+                        "Right, I’m following."
+                    ]),
+                    clear_pending=False
+                )
+
         # A clear new first-person topic should continue through
         # normal routing rather than being attached to the old story.
         new_topic_starters = (
@@ -1825,6 +2425,14 @@ class Context:
             self.set_active_proposition(
                 f"{self.person_topic_phrase()} "
                 f"being {description}"
+            )
+
+            self.last_story_subject = (
+                self.person_topic_phrase()
+            )
+
+            self.last_story_action = (
+                f"was {description}"
             )
 
             tone_replies = {
@@ -1917,6 +2525,12 @@ class Context:
                 f"{self.person_topic_phrase()} "
                 f"{action}"
             )
+
+            self.last_story_subject = (
+                self.person_topic_phrase()
+            )
+
+            self.last_story_action = action
 
             if connector == "but":
                 replies = [
@@ -2400,11 +3014,77 @@ class Context:
                 clear_pending=False
             )
 
+        relationship_prefixes = [
+            "my best friend ",
+            "my friend ",
+            "my sister ",
+            "my brother ",
+            "my mum ",
+            "my mom ",
+            "my dad ",
+            "my cousin ",
+            "my teacher ",
+            "my classmate "
+        ]
+
+        detail = lowered
+
+        for prefix in relationship_prefixes:
+
+            if detail.startswith(prefix):
+                detail = detail[
+                    len(prefix):
+                ].strip()
+                break
+
+        if detail:
+
+            self.last_story_subject = (
+                self.person_topic_phrase()
+            )
+
+            self.last_story_action = detail
+
+            self.set_active_proposition(
+                f"{self.person_topic_phrase()} "
+                f"{detail}"
+            )
+
+            action_replies = [
+                "Ohh, okay.",
+                "Right, I’m following.",
+                "Mhm, got you.",
+                "Ahh."
+            ]
+
+            if "shouted" in detail:
+                action_replies = [
+                    "Ohh, they shouted at the class?",
+                    "Yeah, that sounds intense.",
+                    "Ahh, I get why that stood out.",
+                    "Right, I’m following."
+                ]
+
+            elif "spoke to" in detail:
+                action_replies = [
+                    "Ohh, okay.",
+                    "Right, so they spoke.",
+                    "Mhm, I’m following.",
+                    "Ahh."
+                ]
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    action_replies
+                ),
+                clear_pending=False
+            )
+
         return self.make_result(
-            random.choice([
-                f"Ohh, what happened with {self.person_topic_phrase()}?",
+            self.choose_natural_reply([
                 f"Okay, tell me more about {self.person_topic_phrase()}.",
-                f"Wait, what did {self.person_topic_phrase()} do?"
+                f"Ohh, what happened?",
+                f"Right, I’m listening."
             ]),
             clear_pending=False
         )

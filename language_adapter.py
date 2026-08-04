@@ -111,6 +111,31 @@ class LanguageAdapter:
 
         self.safe_phrase_repairs = [
             (
+                r"^so[, ]+my (.+)$",
+                r"my \1",
+                "high"
+            ),
+            (
+                r"^the we (.+)$",
+                r"then we \1",
+                "high"
+            ),
+            (
+                r"^the she (.+)$",
+                r"then she \1",
+                "high"
+            ),
+            (
+                r"^the he (.+)$",
+                r"then he \1",
+                "high"
+            ),
+            (
+                r"^the they (.+)$",
+                r"then they \1",
+                "high"
+            ),
+            (
                 r"^just wondering[, ]+",
                 "",
                 "high"

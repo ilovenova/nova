@@ -24,7 +24,8 @@
         "reason for liking korea": "im nor sure",
         "recent emotion: happy": "nothign much",
         "recent emotion: tired": "because of coding alot",
-        "recent emotion: sad": "i don't know because i'm really tired"
+        "recent emotion: sad": "i don't know because i'm really tired",
+        "sister": true
     },
     "personal": {
         "age": "12",
