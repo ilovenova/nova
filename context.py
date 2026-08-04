@@ -19,6 +19,21 @@ class Context:
         self.last_active_topic = ""
         self.last_control_action = ""
 
+        self.current_project = ""
+        self.current_project_status = ""
+
+        self.current_person = ""
+        self.current_person_label = ""
+        self.last_person_message = ""
+        self.person_message_pending = False
+        self.last_person_question = ""
+
+        self.project_intro_pending = False
+        self.last_project_question = ""
+
+        self.last_nova_question = ""
+        self.last_nova_question_topic = ""
+
         self.paused_follow_up = None
         self.paused_topic = ""
 
@@ -47,10 +62,204 @@ class Context:
 
                 return
 
+        if self.observe_person(
+            message,
+            text
+        ):
+            return
+
+        if self.observe_project(
+            message,
+            text
+        ):
+            return
+
         self.observe_emotion(
             message,
             text
         )
+
+    def observe_person(
+        self,
+        message,
+        text
+    ):
+
+        relationship_prefixes = {
+            "my friend ": "your friend",
+            "my best friend ": "your best friend",
+            "my sister ": "your sister",
+            "my brother ": "your brother",
+            "my mum ": "your mum",
+            "my mom ": "your mom",
+            "my dad ": "your dad",
+            "my cousin ": "your cousin",
+            "my teacher ": "your teacher",
+            "my classmate ": "your classmate"
+        }
+
+        for prefix, label in relationship_prefixes.items():
+
+            if not text.startswith(prefix):
+                continue
+
+            remainder = message[
+                len(prefix):
+            ].strip().rstrip(".!")
+
+            self.current_person_label = label
+
+            possible_name = self.extract_person_name(
+                remainder
+            )
+
+            if possible_name:
+                self.current_person = possible_name
+                self.last_active_topic = (
+                    f"{label} {possible_name}"
+                )
+            else:
+                self.current_person = ""
+                self.last_active_topic = label
+
+            self.last_person_message = message.strip()
+            self.person_message_pending = True
+
+            return True
+
+        pronoun_starters = [
+            "she ",
+            "he ",
+            "they ",
+            "her ",
+            "him ",
+            "them "
+        ]
+
+        if any(
+            text.startswith(starter)
+            for starter in pronoun_starters
+        ):
+
+            if self.current_person_label:
+                self.last_active_topic = (
+                    self.person_topic_phrase()
+                )
+
+            return False
+
+        return False
+
+    def extract_person_name(self, remainder):
+
+        if not remainder:
+            return ""
+
+        words = remainder.split()
+
+        if not words:
+            return ""
+
+        first_word = words[0].strip(
+            " ,.!?'\""
+        )
+
+        blocked_words = {
+            "is",
+            "was",
+            "has",
+            "had",
+            "likes",
+            "loves",
+            "hates",
+            "came",
+            "went",
+            "pulled",
+            "said",
+            "told",
+            "helped",
+            "called",
+            "started"
+        }
+
+        if first_word.lower() in blocked_words:
+            return ""
+
+        if first_word.lower() in {
+            "he",
+            "she",
+            "they",
+            "who",
+            "that"
+        }:
+            return ""
+
+        if first_word[:1].isupper():
+            return first_word
+
+        return ""
+
+    def person_topic_phrase(self):
+
+        if self.current_person and self.current_person_label:
+            return (
+                f"{self.current_person_label} "
+                f"{self.current_person}"
+            )
+
+        return self.current_person_label
+
+    def observe_project(
+        self,
+        message,
+        text
+    ):
+
+        project_prefixes = [
+            "i'm working on ",
+            "im working on ",
+            "i am working on ",
+            "i'm trying to ",
+            "im trying to ",
+            "i am trying to ",
+            "i'm building ",
+            "im building ",
+            "i am building ",
+            "i'm coding ",
+            "im coding ",
+            "i am coding ",
+            "my project is ",
+            "we're working on ",
+            "were working on ",
+            "we are working on "
+        ]
+
+        for prefix in project_prefixes:
+
+            if not text.startswith(prefix):
+                continue
+
+            project = message[
+                len(prefix):
+            ].strip().rstrip(".!")
+
+            if (
+                project
+                and project.lower() not in {
+                    "it",
+                    "this",
+                    "that",
+                    "something"
+                }
+            ):
+                self.current_project = project
+                self.current_project_status = "working"
+                self.last_active_topic = project
+                self.project_intro_pending = True
+
+            return True
+
+        return False
 
     def observe_emotion(
         self,
@@ -163,6 +372,70 @@ class Context:
 
         if control_result:
             return control_result
+
+        acknowledgement_result = (
+            self.handle_short_acknowledgement(
+                text,
+                pending_follow_up
+            )
+        )
+
+        if acknowledgement_result:
+            return acknowledgement_result
+
+        generic_continuation_result = (
+            self.handle_generic_continuation(
+                message,
+                text
+            )
+        )
+
+        if generic_continuation_result:
+            return generic_continuation_result
+
+        person_continuation_result = (
+            self.handle_person_continuation(
+                message,
+                text
+            )
+        )
+
+        if person_continuation_result:
+            return person_continuation_result
+
+        project_answer_result = (
+            self.handle_project_answer(
+                message,
+                text
+            )
+        )
+
+        if project_answer_result:
+            return project_answer_result
+
+        person_result = self.handle_person_statement(
+            message,
+            text
+        )
+
+        if person_result:
+            return person_result
+
+        project_intro_result = self.handle_project_intro(
+            message,
+            text
+        )
+
+        if project_intro_result:
+            return project_intro_result
+
+        project_result = self.handle_project_progress(
+            message,
+            text
+        )
+
+        if project_result:
+            return project_result
 
         if self.is_direct_new_request(text):
 
@@ -585,6 +858,750 @@ class Context:
 
         return None
 
+    # -------------------------------------------------
+    # Active person continuity
+    # -------------------------------------------------
+
+    def resolve_simple_reference(
+        self,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if normalised in {
+            "it",
+            "that",
+            "this",
+            "that one",
+            "this one"
+        }:
+
+            if self.current_project:
+                return self.current_project
+
+            if self.last_active_topic:
+                return self.last_active_topic
+
+        if normalised in {
+            "she",
+            "her"
+        }:
+
+            if self.current_person_label:
+                return self.person_topic_phrase()
+
+        if normalised in {
+            "he",
+            "him"
+        }:
+
+            if self.current_person_label:
+                return self.person_topic_phrase()
+
+        if normalised in {
+            "they",
+            "them"
+        }:
+
+            if self.current_person_label:
+                return self.person_topic_phrase()
+
+        return ""
+
+    def handle_generic_continuation(
+        self,
+        message,
+        text
+    ):
+
+        if not self.last_nova_question:
+            return None
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        resolved_reference = self.resolve_simple_reference(
+            normalised
+        )
+
+        if resolved_reference:
+            normalised = resolved_reference
+
+        if not normalised:
+            return None
+
+        if str(message).strip().endswith("?"):
+            return None
+
+        if normalised in {
+            "never mind",
+            "not now",
+            "maybe later",
+            "another time"
+        }:
+            return None
+
+        if len(normalised.split()) > 20:
+            return None
+
+        if self.last_nova_question == "project_change":
+            return None
+
+        if self.last_nova_question == "rain_reaction":
+            return None
+
+        topic = self.last_nova_question_topic
+
+        self.last_nova_question = ""
+        self.last_nova_question_topic = ""
+
+        if topic:
+            return self.make_result(
+                random.choice([
+                    f"Okay, that makes sense about {topic}.",
+                    f"Right, I'm following — this is about {topic}.",
+                    f"Got it. That helps me understand {topic} better."
+                ]),
+                clear_pending=False
+            )
+
+        return self.make_result(
+            random.choice([
+                "Okay, that makes sense.",
+                "Right, I'm following.",
+                "Got it."
+            ]),
+            clear_pending=False
+        )
+
+    def handle_person_continuation(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if self.last_person_question == "rain_reaction":
+
+            funny_phrases = {
+                "it was funny",
+                "i found it funny",
+                "it was actually funny",
+                "i thought it was funny",
+                "funny",
+                "i laughed"
+            }
+
+            annoyed_phrases = {
+                "it was annoying",
+                "i was annoyed",
+                "it annoyed me",
+                "annoying",
+                "i didnt like it",
+                "i didn't like it"
+            }
+
+            if normalised in funny_phrases:
+                self.last_person_question = ""
+                self.last_nova_question = ""
+                self.last_nova_question_topic = ""
+
+                return self.make_result(
+                    random.choice([
+                        "Okay, that makes it way better 😭",
+                        "😭 Fair enough — at least you found it funny.",
+                        "That actually sounds like one of those chaotic-funny moments.",
+                        "Okayyy, that sounds more funny than annoying then 😭"
+                    ]),
+                    clear_pending=False
+                )
+
+            if normalised in annoyed_phrases:
+                self.last_person_question = ""
+                self.last_nova_question = ""
+                self.last_nova_question_topic = ""
+
+                return self.make_result(
+                    random.choice([
+                        "Yeah, I would understand being annoyed by that.",
+                        "That makes sense. Being pulled into rain without warning would be irritating.",
+                        "Fair enough — funny for your friend, less funny for you."
+                    ]),
+                    clear_pending=False
+                )
+
+        pronoun_starters = (
+            "she ",
+            "he ",
+            "they "
+        )
+
+        if (
+            self.current_person_label
+            and normalised.startswith(
+                pronoun_starters
+            )
+        ):
+
+            self.last_active_topic = (
+                self.person_topic_phrase()
+            )
+
+            if (
+                "likes the rain" in normalised
+                or "loves the rain" in normalised
+            ):
+                replies = [
+                    "Ohhh, that explains why she pulled you into it 😭",
+                    "Okay, now it makes sense 😭 She wanted you to enjoy the rain with her.",
+                    "She really committed to sharing the rain experience with you then 😭"
+                ]
+
+                if random.random() < 0.35:
+                    replies.append(
+                        "What does she like about the rain so much?"
+                    )
+
+                return self.make_result(
+                    random.choice(replies),
+                    clear_pending=False
+                )
+
+            return self.make_result(
+                random.choice([
+                    f"Ohh, so this is still about {self.person_topic_phrase()}.",
+                    f"Okay, tell me more about {self.person_topic_phrase()}.",
+                    "Right, I'm following."
+                ]),
+                clear_pending=False
+            )
+
+        return None
+
+    def interpret_project_answer(
+        self,
+        answer
+    ):
+
+        clean_answer = str(
+            answer
+        ).strip()
+
+        lowered_project = self.current_project.lower()
+
+        nova_project = (
+            "nova" in lowered_project
+            or "your " in lowered_project
+            or "you " in lowered_project
+        )
+
+        if not nova_project:
+            return clean_answer
+
+        replacements = [
+            (
+                r"\bhow much you know\b",
+                "how much I know"
+            ),
+            (
+                r"\bwhat you know\b",
+                "what I know"
+            ),
+            (
+                r"\byour knowledge\b",
+                "my knowledge"
+            ),
+            (
+                r"\byour memory\b",
+                "my memory"
+            ),
+            (
+                r"\byour dictionary\b",
+                "my dictionary"
+            ),
+            (
+                r"\bhow you respond\b",
+                "how I respond"
+            ),
+            (
+                r"\bhow you understand\b",
+                "how I understand"
+            )
+        ]
+
+        interpreted = clean_answer
+
+        for pattern, replacement in replacements:
+
+            interpreted = re.sub(
+                pattern,
+                replacement,
+                interpreted,
+                flags=re.IGNORECASE
+            )
+
+        return interpreted
+
+    def handle_project_answer(
+        self,
+        message,
+        text
+    ):
+
+        if (
+            not self.current_project
+            or not self.last_project_question
+        ):
+            return None
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        # A short answer to Nova's project question may begin
+        # with words such as "how", "what", or "which".
+        # Only treat it as a separate question when the user
+        # actually includes question punctuation.
+        if str(message).strip().endswith("?"):
+            return None
+
+        if normalised in {
+            "its not working",
+            "it's not working",
+            "it works",
+            "it works now",
+            "i fixed it",
+            "we fixed it"
+        }:
+            return None
+
+        if len(normalised.split()) > 18:
+            return None
+
+        self.last_project_question = ""
+        self.last_nova_question = ""
+        self.last_nova_question_topic = ""
+        self.last_active_topic = self.current_project
+
+        interpreted_answer = self.interpret_project_answer(
+            message
+        )
+
+        replies = [
+            (
+                f"Ooo, so you're changing "
+                f"{interpreted_answer} in "
+                f"{self.current_project}."
+            ),
+            (
+                f"Ahh, you're working on "
+                f"{interpreted_answer}. "
+                "That sounds like an important part."
+            ),
+            (
+                f"Okay, I get it — this part is about "
+                f"{interpreted_answer}."
+            )
+        ]
+
+        if random.random() < 0.35:
+            replies.extend([
+                (
+                    f"Wait, so this is about "
+                    f"{interpreted_answer}? "
+                    "What are you hoping it will improve?"
+                ),
+                (
+                    f"That sounds interesting — "
+                    f"{interpreted_answer}. "
+                    "How are you planning to change it?"
+                )
+            ])
+
+        return self.make_result(
+            random.choice(replies),
+            clear_pending=False
+        )
+
+    def handle_person_statement(
+        self,
+        message,
+        text
+    ):
+
+        if not self.person_message_pending:
+            return None
+
+        if message.strip() != self.last_person_message:
+            return None
+
+        self.person_message_pending = False
+
+        lowered = self.normalise_control_text(
+            text
+        )
+
+        if any(
+            phrase in lowered
+            for phrase in [
+                "pulled me into the rain",
+                "dragged me into the rain"
+            ]
+        ):
+            self.last_person_question = "rain_reaction"
+            self.last_nova_question = "rain_reaction"
+            self.last_nova_question_topic = (
+                self.person_topic_phrase()
+            )
+
+            return self.make_result(
+                random.choice([
+                    "Wait, your friend pulled you into the rain? 😭 Was it funny or were you annoyed?",
+                    "Into the rain?? 😭 Did you find it funny, or was it annoying?",
+                    "Your friend really said you're coming into the rain with me 😭 How did you feel about it?"
+                ]),
+                clear_pending=False
+            )
+
+        if "likes the rain" in lowered or "loves the rain" in lowered:
+            return self.make_result(
+                random.choice([
+                    "Ohh, that explains it a little. What do they like about the rain?",
+                    "Your friend really likes rain then 😭 Do you know why?",
+                    "Okay, now I'm curious — what do they like about it?"
+                ]),
+                clear_pending=False
+            )
+
+        return self.make_result(
+            random.choice([
+                f"Ohh, what happened with {self.person_topic_phrase()}?",
+                f"Okay, tell me more about {self.person_topic_phrase()}.",
+                f"Wait, what did {self.person_topic_phrase()} do?"
+            ]),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
+    # Active project introductions
+    # -------------------------------------------------
+
+    def handle_project_intro(
+        self,
+        message,
+        text
+    ):
+
+        if not self.project_intro_pending:
+            return None
+
+        project_prefixes = [
+            "i'm working on ",
+            "im working on ",
+            "i am working on ",
+            "i'm trying to ",
+            "im trying to ",
+            "i am trying to ",
+            "i'm building ",
+            "im building ",
+            "i am building ",
+            "i'm coding ",
+            "im coding ",
+            "i am coding ",
+            "my project is ",
+            "we're working on ",
+            "were working on ",
+            "we are working on "
+        ]
+
+        if not any(
+            text.startswith(prefix)
+            for prefix in project_prefixes
+        ):
+            return None
+
+        self.project_intro_pending = False
+        self.last_project_question = "project_change"
+        self.last_nova_question = "project_change"
+        self.last_nova_question_topic = self.current_project
+
+        return self.make_result(
+            random.choice([
+                f"Ooo, you're working on {self.current_project} now? What are you changing?",
+                f"Ahh, back to {self.current_project}. What are you adding this time?",
+                f"Nice — {self.current_project}. Which part are you working on?"
+            ]),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
+    # Active project and progress continuity
+    # -------------------------------------------------
+
+    def handle_project_progress(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        working_phrases = {
+            "im still working on it",
+            "i'm still working on it",
+            "i am still working on it",
+            "im still trying",
+            "i'm still trying",
+            "i am still trying",
+            "im still testing it",
+            "i'm still testing it",
+            "i am still testing it",
+            "still testing it",
+            "still working on it"
+        }
+
+        failing_phrases = {
+            "its not working",
+            "it's not working",
+            "it isnt working",
+            "it isn't working",
+            "it doesnt work",
+            "it doesn't work",
+            "that didnt work",
+            "that didn't work",
+            "that broke it",
+            "i broke it",
+            "it broke",
+            "it failed",
+            "still not working"
+        }
+
+        success_phrases = {
+            "it works",
+            "it works now",
+            "its working",
+            "it's working",
+            "its working now",
+            "it's working now",
+            "i fixed it",
+            "we fixed it",
+            "we finally fixed it",
+            "we finally got it working",
+            "i got it working",
+            "it finally works",
+            "it finally worked"
+        }
+
+        if normalised in working_phrases:
+
+            if not self.current_project:
+                return None
+
+            self.current_project_status = "testing"
+            self.last_active_topic = self.current_project
+
+            return self.make_result(
+                random.choice([
+                    (
+                        f"Okay — you're still working on "
+                        f"{self.current_project}."
+                    ),
+                    (
+                        f"Got it. You're still testing "
+                        f"{self.current_project}."
+                    ),
+                    (
+                        "Alright. Let me know what happens "
+                        "with it."
+                    )
+                ]),
+                clear_pending=False
+            )
+
+        if normalised in failing_phrases:
+
+            if not self.current_project:
+                return None
+
+            self.current_project_status = "not working"
+            self.last_active_topic = self.current_project
+
+            return self.make_result(
+                random.choice([
+                    (
+                        f"Ahh, that's annoying. "
+                        f"{self.current_project} still "
+                        "isn't working."
+                    ),
+                    (
+                        f"Oh no — something went wrong with "
+                        f"{self.current_project}. What part "
+                        "is failing?"
+                    ),
+                    (
+                        f"Still fighting with "
+                        f"{self.current_project}? I hope "
+                        "this is the last stubborn bug."
+                    )
+                ]),
+                clear_pending=False
+            )
+
+        if normalised in success_phrases:
+
+            if not self.current_project:
+                return None
+
+            self.current_project_status = "working"
+            self.last_active_topic = self.current_project
+
+            return self.make_result(
+                random.choice([
+                    (
+                        f"Yesss — {self.current_project} "
+                        "is working now!"
+                    ),
+                    (
+                        f"You fixed {self.current_project}!"
+                    ),
+                    (
+                        f"Finally! We got "
+                        f"{self.current_project} working."
+                    )
+                ]),
+                clear_pending=False
+            )
+
+        return None
+
+    # -------------------------------------------------
+    # Short acknowledgement continuity
+    # -------------------------------------------------
+
+    def handle_short_acknowledgement(
+        self,
+        text,
+        pending_follow_up
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        acknowledgement_phrases = {
+            "yeah",
+            "yh",
+            "yes",
+            "exactly",
+            "right",
+            "correct",
+            "thats right",
+            "that's right",
+            "that is right",
+            "true",
+            "thats true",
+            "that's true",
+            "that is true",
+            "youre right",
+            "you're right",
+            "you are right"
+        }
+
+        if normalised not in acknowledgement_phrases:
+            return None
+
+        has_active_context = bool(
+            pending_follow_up
+            or self.last_active_topic
+            or self.current_learning_topic
+            or self.current_emotion_topic
+        )
+
+        if not has_active_context:
+            return None
+
+        if pending_follow_up:
+
+            kind = str(
+                pending_follow_up.get(
+                    "kind",
+                    ""
+                )
+            ).strip()
+
+            question_type = str(
+                pending_follow_up.get(
+                    "question_type",
+                    ""
+                )
+            ).strip()
+
+            # A yes/no acknowledgement may genuinely answer
+            # some questions, so let their own module handle it.
+            if question_type in {
+                "yes_no",
+                "confirmation",
+                "permission"
+            }:
+                return None
+
+            if kind in {
+                "reflection",
+                "world_learning"
+            }:
+                return None
+
+        self.last_control_action = "acknowledged"
+
+        if normalised in {
+            "exactly",
+            "correct",
+            "thats right",
+            "that's right",
+            "that is right",
+            "youre right",
+            "you're right",
+            "you are right"
+        }:
+            reply = random.choice([
+                "Exactly.",
+                "Right — that makes sense.",
+                "Got it. I understood you correctly."
+            ])
+
+        elif normalised in {
+            "true",
+            "thats true",
+            "that's true",
+            "that is true"
+        }:
+            reply = random.choice([
+                "Yeah, that's true.",
+                "Right.",
+                "That makes sense."
+            ])
+
+        else:
+            reply = random.choice([
+                "Yeah, that makes sense.",
+                "Right.",
+                "I understand."
+            ])
+
+        return self.make_result(
+            reply,
+            clear_pending=False
+        )
+
     def extract_resume_topic(self, text):
 
         patterns = [
@@ -806,15 +1823,67 @@ class Context:
             )
 
         if self.last_active_topic:
-            return self.last_active_topic
+            return self.natural_topic_phrase(
+                self.last_active_topic
+            )
 
         if self.current_learning_topic:
-            return self.current_learning_topic
+            return (
+                f"you learning "
+                f"{self.current_learning_topic}"
+            )
 
         if self.current_emotion_topic:
+            if self.current_emotion:
+                return (
+                    f"you feeling "
+                    f"{self.current_emotion} about "
+                    f"{self.current_emotion_topic}"
+                )
+
             return self.current_emotion_topic
 
+        if self.current_project:
+            return (
+                f"you working on "
+                f"{self.current_project}"
+            )
+
+        if self.current_person_label:
+            return self.person_topic_phrase()
+
         return ""
+
+    def natural_topic_phrase(self, topic):
+
+        clean_topic = str(
+            topic
+        ).strip()
+
+        lowered = clean_topic.lower()
+
+        feeling_topics = {
+            "tired",
+            "sad",
+            "stressed",
+            "happy",
+            "bored",
+            "worried",
+            "scared",
+            "upset",
+            "excited",
+            "proud"
+        }
+
+        if lowered in feeling_topics:
+            return f"you being {clean_topic}"
+
+        if lowered.startswith(
+            "you "
+        ):
+            return clean_topic
+
+        return clean_topic
 
     def answer_feeling_reason(self, message, context):
 
