@@ -40,6 +40,13 @@ class Context:
         self.last_nova_statement = ""
         self.last_nova_statement_type = ""
 
+        self.active_proposition = ""
+        self.previous_proposition = ""
+
+        self.consecutive_nova_questions = 0
+        self.turns_since_nova_question = 3
+        self.last_curiosity_topic = ""
+
         self.paused_follow_up = None
         self.paused_topic = ""
 
@@ -397,16 +404,6 @@ class Context:
         if ellipsis_result:
             return ellipsis_result
 
-        description_result = (
-            self.handle_experience_description(
-                message,
-                text
-            )
-        )
-
-        if description_result:
-            return description_result
-
         person_description_result = (
             self.handle_person_description(
                 message,
@@ -416,6 +413,16 @@ class Context:
 
         if person_description_result:
             return person_description_result
+
+        description_result = (
+            self.handle_experience_description(
+                message,
+                text
+            )
+        )
+
+        if description_result:
+            return description_result
 
         generic_continuation_result = (
             self.handle_generic_continuation(
@@ -727,7 +734,11 @@ class Context:
             "go back to the last topic",
             "continue the last topic",
             "carry on from before",
-            "continue from before"
+            "continue from before",
+            "back to before",
+            "what about the thing before",
+            "lets go back to the other thing",
+            "let's go back to the other thing"
         }
 
         resume_question_phrases = {
@@ -888,11 +899,24 @@ class Context:
 
         if normalised in return_phrases:
 
-            topic = self.describe_current_topic(
-                pending_follow_up
-            )
+            topic = ""
+
+            if (
+                "other thing" in normalised
+                or "before" in normalised
+            ):
+                topic = self.previous_proposition
+
+            if not topic:
+                topic = self.describe_current_topic(
+                    pending_follow_up
+                )
 
             if topic:
+                self.set_active_proposition(
+                    topic
+                )
+
                 return self.make_result(
                     f"Okay. Let's go back to {topic}.",
                     clear_pending=False
@@ -1013,6 +1037,13 @@ class Context:
             2
         ).strip()
 
+        if description.endswith(
+            " today"
+        ):
+            description = description[
+                :-len(" today")
+            ].strip()
+
         if not person_type or not description:
             return None
 
@@ -1024,6 +1055,10 @@ class Context:
         self.current_person_label = person_label
         self.current_person = ""
         self.last_active_topic = (
+            f"{person_label} being {description}"
+        )
+
+        self.set_active_proposition(
             f"{person_label} being {description}"
         )
 
@@ -1056,7 +1091,10 @@ class Context:
                 f"Ugh, {description} is hard to deal with."
             ]
 
-            if random.random() < 0.35:
+            if self.should_ask_curiosity(
+                topic=person_label,
+                base_chance=0.35
+            ):
                 replies.append(
                     f"What did {person_label} do?"
                 )
@@ -1074,7 +1112,10 @@ class Context:
                 f"Okay, so {person_label} was {description}."
             ]
 
-            if random.random() < 0.3:
+            if self.should_ask_curiosity(
+                topic=f"{person_label} {description}",
+                base_chance=0.30
+            ):
                 replies.append(
                     f"What made {person_label} seem {description}?"
                 )
@@ -1143,6 +1184,10 @@ class Context:
             return None
 
         self.last_active_topic = (
+            f"the {subject} being {description}"
+        )
+
+        self.set_active_proposition(
             f"the {subject} being {description}"
         )
 
@@ -1229,40 +1274,59 @@ class Context:
         # Example:
         # Nova: What do they like about the rain?
         # User: the cooling feeling on their skin
+        # or: she likes the cooling feeling on her skin
         if (
             self.current_person_label
             and self.last_question_shape == "preference_reason"
         ):
 
-            if not self.starts_with_explicit_subject(
+            interpreted_detail = ""
+
+            explicit_match = re.match(
+                r"^(she|he|they)(?: likes?| loves?) (.+)$",
+                normalised
+            )
+
+            if explicit_match:
+                interpreted_detail = explicit_match.group(
+                    2
+                ).strip()
+
+            elif not self.starts_with_explicit_subject(
                 normalised
             ):
+                interpreted_detail = normalised
 
-                interpreted = (
-                    f"they like {normalised}"
-                )
+            if interpreted_detail:
 
                 self.last_active_topic = (
                     f"{self.person_topic_phrase()} "
-                    f"liking {normalised}"
+                    f"liking {interpreted_detail}"
+                )
+
+                self.set_active_proposition(
+                    f"{self.person_topic_phrase()} "
+                    f"liking {interpreted_detail}"
                 )
 
                 self.last_question_shape = ""
                 self.last_question_subject = ""
+                self.last_nova_question = ""
+                self.last_nova_question_topic = ""
 
                 return self.make_result(
                     random.choice([
                         (
                             f"Ahh, they like "
-                            f"{normalised}. That makes sense."
+                            f"{interpreted_detail}. That makes sense."
                         ),
                         (
                             f"Ohh, so it’s "
-                            f"{normalised} they like."
+                            f"{interpreted_detail} they like."
                         ),
                         (
                             f"Okay, I get it — "
-                            f"{normalised} is what they enjoy."
+                            f"{interpreted_detail} is what they enjoy."
                         )
                     ]),
                     clear_pending=False
@@ -1283,6 +1347,12 @@ class Context:
                 if reason:
                     self.current_emotion_topic = reason
                     self.last_active_topic = (
+                        f"you feeling "
+                        f"{self.current_emotion} because of "
+                        f"{reason}"
+                    )
+
+                    self.set_active_proposition(
                         f"you feeling "
                         f"{self.current_emotion} because of "
                         f"{reason}"
@@ -1326,6 +1396,11 @@ class Context:
                     f"being {trait}"
                 )
 
+                self.set_active_proposition(
+                    f"{self.person_topic_phrase()} "
+                    f"being {trait}"
+                )
+
                 return self.make_result(
                     random.choice([
                         f"Aw, {self.person_topic_phrase()} sounds {trait}.",
@@ -1344,12 +1419,32 @@ class Context:
 
         starters = (
             "i ",
+            "i'm ",
+            "im ",
+            "i've ",
+            "ive ",
+            "i'll ",
+            "ill ",
             "you ",
+            "you're ",
+            "youre ",
+            "you've ",
+            "youve ",
             "he ",
+            "he's ",
+            "hes ",
             "she ",
+            "she's ",
+            "shes ",
             "they ",
+            "they're ",
+            "theyre ",
             "we ",
+            "we're ",
+            "were ",
             "it ",
+            "it's ",
+            "its ",
             "my ",
             "your ",
             "his ",
@@ -1514,7 +1609,10 @@ class Context:
                     "She really committed to sharing the rain experience with you then 😭"
                 ]
 
-                if random.random() < 0.35:
+                if self.should_ask_curiosity(
+                    topic=f"{self.person_topic_phrase()} rain",
+                    base_chance=0.35
+                ):
                     self.last_question_shape = "preference_reason"
                     self.last_question_subject = (
                         self.person_topic_phrase()
@@ -1649,6 +1747,11 @@ class Context:
             message
         )
 
+        self.set_active_proposition(
+            f"you working on {interpreted_answer} "
+            f"in {self.current_project}"
+        )
+
         replies = [
             (
                 f"Ooo, so you're changing "
@@ -1666,7 +1769,10 @@ class Context:
             )
         ]
 
-        if random.random() < 0.35:
+        if self.should_ask_curiosity(
+            topic=self.current_project,
+            base_chance=0.35
+        ):
             replies.extend([
                 (
                     f"Wait, so this is about "
@@ -1730,6 +1836,10 @@ class Context:
             )
 
         if "likes the rain" in lowered or "loves the rain" in lowered:
+            self.set_active_proposition(
+                f"{self.person_topic_phrase()} liking the rain"
+            )
+
             self.last_question_shape = "preference_reason"
             self.last_question_subject = (
                 self.person_topic_phrase()
@@ -1792,6 +1902,12 @@ class Context:
             return None
 
         self.project_intro_pending = False
+
+        self.last_question_shape = ""
+        self.last_question_subject = ""
+        self.last_nova_question = ""
+        self.last_nova_question_topic = ""
+
         self.last_project_question = "project_change"
         self.last_nova_question = "project_change"
         self.last_nova_question_topic = self.current_project
@@ -1971,6 +2087,60 @@ class Context:
                 clean_reply
             )
         )
+
+        if clean_reply.rstrip().endswith("?"):
+            self.consecutive_nova_questions += 1
+            self.turns_since_nova_question = 0
+        else:
+            self.consecutive_nova_questions = 0
+            self.turns_since_nova_question += 1
+
+    def should_ask_curiosity(
+        self,
+        topic="",
+        base_chance=0.30
+    ):
+
+        clean_topic = str(
+            topic
+        ).strip().lower()
+
+        if self.last_control_action in {
+            "paused",
+            "cancelled",
+            "changed_subject"
+        }:
+            return False
+
+        if self.last_nova_statement_type == "question":
+            return False
+
+        if self.consecutive_nova_questions >= 1:
+            return False
+
+        if self.turns_since_nova_question < 1:
+            return False
+
+        if (
+            clean_topic
+            and clean_topic == self.last_curiosity_topic
+        ):
+            return False
+
+        chance = max(
+            0.0,
+            min(
+                float(base_chance),
+                0.65
+            )
+        )
+
+        should_ask = random.random() < chance
+
+        if should_ask and clean_topic:
+            self.last_curiosity_topic = clean_topic
+
+        return should_ask
 
     def classify_nova_reply(
         self,
@@ -2532,6 +2702,28 @@ class Context:
         if kind:
             self.last_active_topic = kind
 
+    def set_active_proposition(
+        self,
+        proposition
+    ):
+
+        clean = str(
+            proposition
+        ).strip().rstrip(".!")
+
+        if not clean:
+            return
+
+        if (
+            self.active_proposition
+            and self.active_proposition != clean
+        ):
+            self.previous_proposition = (
+                self.active_proposition
+            )
+
+        self.active_proposition = clean
+
     def describe_current_topic(
         self,
         pending_follow_up
@@ -2541,6 +2733,9 @@ class Context:
             self.remember_follow_up_topic(
                 pending_follow_up
             )
+
+        if self.active_proposition:
+            return self.active_proposition
 
         if self.last_active_topic:
             return self.natural_topic_phrase(
