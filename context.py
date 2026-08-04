@@ -16,6 +16,12 @@ class Context:
         self.current_emotion = ""
         self.current_emotion_topic = ""
 
+        self.last_active_topic = ""
+        self.last_control_action = ""
+
+        self.paused_follow_up = None
+        self.paused_topic = ""
+
     def observe(self, message, text):
 
         prefixes = [
@@ -37,6 +43,7 @@ class Context:
                     "that"
                 ]:
                     self.current_learning_topic = topic
+                    self.last_active_topic = topic
 
                 return
 
@@ -122,6 +129,7 @@ class Context:
 
                 self.current_emotion = emotion
                 self.current_emotion_topic = topic
+                self.last_active_topic = topic
 
                 self.memory.set_profile_fact(
                     f"recent emotion: {emotion}",
@@ -146,6 +154,15 @@ class Context:
         world_learning,
         conversation
     ):
+
+        control_result = self.handle_conversation_control(
+            message,
+            text,
+            pending_follow_up
+        )
+
+        if control_result:
+            return control_result
 
         if self.is_direct_new_request(text):
 
@@ -317,6 +334,487 @@ class Context:
             )
 
         return None
+
+    # -------------------------------------------------
+    # Universal Conversation Control
+    # -------------------------------------------------
+
+    def handle_conversation_control(
+        self,
+        message,
+        text,
+        pending_follow_up
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        cancel_phrases = {
+            "never mind",
+            "nevermind",
+            "forget that question",
+            "forget the question",
+            "leave it",
+            "leave that",
+            "drop it",
+            "ignore that question",
+            "i dont want to answer",
+            "i don't want to answer",
+            "i do not want to answer",
+            "id rather not answer",
+            "i'd rather not answer",
+            "dont ask me that",
+            "don't ask me that",
+            "stop asking that"
+        }
+
+        pause_phrases = {
+            "not now",
+            "maybe later",
+            "another time",
+            "ask me later",
+            "we can talk about it later",
+            "lets talk about it later",
+            "let's talk about it later",
+            "i dont want to talk about it now",
+            "i don't want to talk about it now"
+        }
+
+        subject_change_phrases = {
+            "change the subject",
+            "can we change the subject",
+            "lets change the subject",
+            "let's change the subject",
+            "talk about something else",
+            "can we talk about something else",
+            "something else",
+            "new topic"
+        }
+
+        recall_phrases = {
+            "what were we talking about",
+            "what were we talking about again",
+            "what was i talking about",
+            "what was the topic",
+            "where were we"
+        }
+
+        return_phrases = {
+            "go back",
+            "go back to what i said",
+            "go back to what i said earlier",
+            "go back to the last topic",
+            "continue the last topic",
+            "carry on from before",
+            "continue from before"
+        }
+
+        resume_question_phrases = {
+            "ask me now",
+            "you can ask me now",
+            "you can ask me anything now",
+            "you can ask me anything rn",
+            "you can ask me anything right now",
+            "we can talk about it now",
+            "lets talk about it now",
+            "let's talk about it now",
+            "go back to that question",
+            "ask that question again",
+            "continue that question",
+            "carry on with the question",
+            "im ready to answer now",
+            "i'm ready to answer now",
+            "im ready to talk",
+            "i'm ready to talk",
+            "im ready to talk now",
+            "i'm ready to talk now",
+            "im ready to talk about it",
+            "i'm ready to talk about it",
+            "i feel ready to talk",
+            "im feeling ready to talk",
+            "i'm feeling ready to talk",
+            "im feeling open to talk",
+            "i'm feeling open to talk",
+            "i feel open to talk"
+        }
+
+        if normalised in cancel_phrases:
+
+            self.last_control_action = "cancelled"
+            self.clear_paused_follow_up()
+
+            if pending_follow_up:
+                self.remember_follow_up_topic(
+                    pending_follow_up
+                )
+
+                return self.make_result(
+                    random.choice([
+                        "Okay. We can leave that.",
+                        "That's okay. You don't have to answer.",
+                        "Alright. I'll drop that question.",
+                        "No problem. We can move on."
+                    ]),
+                    clear_pending=True
+                )
+
+            return self.make_result(
+                random.choice([
+                    "Okay. We can leave it.",
+                    "No problem.",
+                    "Alright, we can move on."
+                ]),
+                clear_pending=True
+            )
+
+        if normalised in pause_phrases:
+
+            self.last_control_action = "paused"
+
+            if pending_follow_up:
+                self.pause_follow_up(
+                    pending_follow_up
+                )
+
+            return self.make_result(
+                random.choice([
+                    "Okay. We can come back to it another time.",
+                    "That's fine. We'll leave it for now.",
+                    "Alright. No pressure.",
+                    "Okay, not now."
+                ]),
+                clear_pending=True
+            )
+
+        if normalised in subject_change_phrases:
+
+            self.last_control_action = "changed_subject"
+            self.clear_paused_follow_up()
+
+            if pending_follow_up:
+                self.remember_follow_up_topic(
+                    pending_follow_up
+                )
+
+            return self.make_result(
+                random.choice([
+                    "Of course. What do you want to talk about instead?",
+                    "Sure. We can change the subject.",
+                    "Okay. What should we talk about now?",
+                    "Absolutely. New topic."
+                ]),
+                clear_pending=True
+            )
+
+        resume_topic = self.extract_resume_topic(
+            normalised
+        )
+
+        if (
+            normalised in resume_question_phrases
+            or resume_topic
+        ):
+
+            if not self.paused_follow_up:
+                return self.make_result(
+                    (
+                        "I don't have a paused question "
+                        "to return to."
+                    ),
+                    clear_pending=False
+                )
+
+            resumed_follow_up = dict(
+                self.paused_follow_up
+            )
+
+            question = self.follow_up_question_text(
+                resumed_follow_up
+            )
+
+            self.last_control_action = "resumed"
+            self.clear_paused_follow_up()
+
+            if question:
+                return self.make_result(
+                    question,
+                    clear_pending=True,
+                    next_follow_up=resumed_follow_up
+                )
+
+            return self.make_result(
+                "Okay. We can return to that now.",
+                clear_pending=True,
+                next_follow_up=resumed_follow_up
+            )
+
+        if normalised in recall_phrases:
+
+            topic = self.describe_current_topic(
+                pending_follow_up
+            )
+
+            if topic:
+                return self.make_result(
+                    f"We were talking about {topic}.",
+                    clear_pending=False
+                )
+
+            return self.make_result(
+                "I'm not completely sure what the last topic was.",
+                clear_pending=False
+            )
+
+        if normalised in return_phrases:
+
+            topic = self.describe_current_topic(
+                pending_follow_up
+            )
+
+            if topic:
+                return self.make_result(
+                    f"Okay. Let's go back to {topic}.",
+                    clear_pending=False
+                )
+
+            return self.make_result(
+                "I'm not sure which earlier topic you want to return to.",
+                clear_pending=False
+            )
+
+        return None
+
+    def extract_resume_topic(self, text):
+
+        patterns = [
+            r"^you can ask me about (.+?) now$",
+            r"^you can ask me about (.+?) rn$",
+            r"^you can ask me about (.+?) right now$",
+            r"^im ready to talk about (.+?)$",
+            r"^i'm ready to talk about (.+?)$",
+            r"^i feel ready to talk about (.+?)$",
+            r"^im feeling open to talk about (.+?)$",
+            r"^i'm feeling open to talk about (.+?)$"
+        ]
+
+        for pattern in patterns:
+
+            match = re.match(
+                pattern,
+                text
+            )
+
+            if match:
+                return match.group(
+                    1
+                ).strip()
+
+        return ""
+
+    def pause_follow_up(self, follow_up):
+
+        if not isinstance(
+            follow_up,
+            dict
+        ):
+            return
+
+        self.paused_follow_up = dict(
+            follow_up
+        )
+
+        self.remember_follow_up_topic(
+            follow_up
+        )
+
+        self.paused_topic = self.last_active_topic
+
+    def clear_paused_follow_up(self):
+
+        self.paused_follow_up = None
+        self.paused_topic = ""
+
+    def follow_up_question_text(
+        self,
+        follow_up
+    ):
+
+        if not isinstance(
+            follow_up,
+            dict
+        ):
+            return ""
+
+        for key in [
+            "question",
+            "prompt",
+            "original_question"
+        ]:
+
+            value = follow_up.get(
+                key
+            )
+
+            if value:
+                return str(value).strip()
+
+        kind = str(
+            follow_up.get(
+                "kind",
+                ""
+            )
+        ).strip()
+
+        topic = str(
+            follow_up.get(
+                "topic",
+                ""
+            )
+        ).strip()
+
+        if kind == "feeling":
+
+            if topic:
+                return f"What made you feel {topic}?"
+
+            return "What made you feel that way?"
+
+        if kind == "learning":
+
+            if topic:
+                return (
+                    f"What part of {topic} are you "
+                    "finding difficult?"
+                )
+
+            return "What part are you finding difficult?"
+
+        if kind == "understanding":
+
+            word = str(
+                follow_up.get(
+                    "word",
+                    ""
+                )
+            ).strip()
+
+            if word:
+                return f"What does '{word}' mean there?"
+
+        if kind == "relationship":
+
+            person = str(
+                follow_up.get(
+                    "person",
+                    ""
+                )
+            ).strip()
+
+            if person:
+                return (
+                    f"What did you want to tell me "
+                    f"about {person}?"
+                )
+
+        if kind == "activity":
+
+            activity = str(
+                follow_up.get(
+                    "activity",
+                    ""
+                )
+            ).strip()
+
+            if activity:
+                return f"What happened with {activity}?"
+
+        return "Can you answer the question from before?"
+
+    def normalise_control_text(self, text):
+
+        normalised = str(
+            text
+        ).lower().strip()
+
+        normalised = re.sub(
+            r"[.!?,]+$",
+            "",
+            normalised
+        )
+
+        normalised = re.sub(
+            r"\s+",
+            " ",
+            normalised
+        )
+
+        return normalised
+
+    def remember_follow_up_topic(self, follow_up):
+
+        if not isinstance(
+            follow_up,
+            dict
+        ):
+            return
+
+        possible_keys = [
+            "topic",
+            "subject",
+            "activity",
+            "person",
+            "word",
+            "question"
+        ]
+
+        for key in possible_keys:
+
+            value = follow_up.get(
+                key
+            )
+
+            if not value:
+                continue
+
+            clean_value = str(
+                value
+            ).strip()
+
+            if clean_value:
+                self.last_active_topic = clean_value
+                return
+
+        kind = str(
+            follow_up.get(
+                "kind",
+                ""
+            )
+        ).strip()
+
+        if kind:
+            self.last_active_topic = kind
+
+    def describe_current_topic(
+        self,
+        pending_follow_up
+    ):
+
+        if pending_follow_up:
+            self.remember_follow_up_topic(
+                pending_follow_up
+            )
+
+        if self.last_active_topic:
+            return self.last_active_topic
+
+        if self.current_learning_topic:
+            return self.current_learning_topic
+
+        if self.current_emotion_topic:
+            return self.current_emotion_topic
+
+        return ""
 
     def answer_feeling_reason(self, message, context):
 
