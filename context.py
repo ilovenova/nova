@@ -47,6 +47,8 @@ class Context:
         self.turns_since_nova_question = 3
         self.last_curiosity_topic = ""
 
+        self.recent_natural_replies = []
+
         self.paused_follow_up = None
         self.paused_topic = ""
 
@@ -404,6 +406,16 @@ class Context:
         if ellipsis_result:
             return ellipsis_result
 
+        mixed_acknowledgement_result = (
+            self.handle_mixed_acknowledgement(
+                message,
+                text
+            )
+        )
+
+        if mixed_acknowledgement_result:
+            return mixed_acknowledgement_result
+
         person_description_result = (
             self.handle_person_description(
                 message,
@@ -423,6 +435,14 @@ class Context:
 
         if description_result:
             return description_result
+
+        story_result = self.handle_story_continuation(
+            message,
+            text
+        )
+
+        if story_result:
+            return story_result
 
         generic_continuation_result = (
             self.handle_generic_continuation(
@@ -987,6 +1007,236 @@ class Context:
     # -------------------------------------------------
 
     # -------------------------------------------------
+    # Mixed acknowledgements
+    # -------------------------------------------------
+
+    def handle_mixed_acknowledgement(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        acknowledgement_pattern = re.match(
+            (
+                r"^(yeah|yh|yes|mhm|mm|right|exactly|true|fr|"
+                r"for real)(?:[, ]+)(.+)$"
+            ),
+            normalised
+        )
+
+        if not acknowledgement_pattern:
+            return None
+
+        acknowledgement = acknowledgement_pattern.group(
+            1
+        ).strip()
+
+        detail = acknowledgement_pattern.group(
+            2
+        ).strip()
+
+        if not detail:
+            return None
+
+        # Remove a leading contrast word while keeping its meaning.
+        contrast = ""
+
+        contrast_match = re.match(
+            r"^(but|though|tho|and)\s+(.+)$",
+            detail
+        )
+
+        if contrast_match:
+            contrast = contrast_match.group(
+                1
+            ).strip()
+
+            detail = contrast_match.group(
+                2
+            ).strip()
+
+        if not detail:
+            return None
+
+        # Example:
+        # "yh it was annoying"
+        description_match = re.match(
+            r"^(?:it|that) was (.+)$",
+            detail
+        )
+
+        if description_match:
+
+            description = description_match.group(
+                1
+            ).strip()
+
+            if description:
+
+                if self.current_person_label:
+                    self.set_active_proposition(
+                        f"{self.person_topic_phrase()} "
+                        f"being {description}"
+                    )
+
+                elif self.active_proposition:
+                    self.set_active_proposition(
+                        f"{self.active_proposition}; "
+                        f"it was {description}"
+                    )
+
+                replies_by_description = {
+                    "annoying": [
+                        "Yeah, that does sound annoying.",
+                        "Mhm, I get why that bothered you.",
+                        "Right, that would annoy me too."
+                    ],
+                    "frustrating": [
+                        "Yeah, that sounds frustrating.",
+                        "Mhm, I get why that got on your nerves.",
+                        "Right, that would be frustrating."
+                    ],
+                    "mean": [
+                        "Yeah, that was mean.",
+                        "Mhm, that wasn’t kind.",
+                        "Right, I wouldn’t like that either."
+                    ],
+                    "rude": [
+                        "Yeah, that was rude.",
+                        "Mhm, that sounds disrespectful.",
+                        "Right, they could’ve handled that better."
+                    ],
+                    "funny": [
+                        "Yeah 😭 that does sound funny.",
+                        "Mhm, I can see why you laughed.",
+                        "Right 😭"
+                    ],
+                    "nice": [
+                        "Yeah, that was nice.",
+                        "Mhm, that’s sweet.",
+                        "Right, I like that."
+                    ]
+                }
+
+                replies = replies_by_description.get(
+                    description,
+                    [
+                        f"Yeah, I get you — it was {description}.",
+                        f"Mhm, {description}.",
+                        f"Right, that makes sense."
+                    ]
+                )
+
+                return self.make_result(
+                    self.choose_natural_reply(
+                        replies
+                    ),
+                    clear_pending=False
+                )
+
+        # Example:
+        # "yeah but she apologised"
+        person_action_match = re.match(
+            r"^(she|he|they) (.+)$",
+            detail
+        )
+
+        if person_action_match and self.current_person_label:
+
+            pronoun = person_action_match.group(
+                1
+            ).strip()
+
+            action = person_action_match.group(
+                2
+            ).strip()
+
+            self.set_active_proposition(
+                f"{self.person_topic_phrase()} "
+                f"{action}"
+            )
+
+            if contrast in {
+                "but",
+                "though",
+                "tho"
+            }:
+                replies = [
+                    f"Ahh, okay — but {pronoun} {action}.",
+                    f"Right, that changes it a little.",
+                    f"Okay, so there’s another side to it."
+                ]
+
+            else:
+                replies = [
+                    f"Ahh, {pronoun} {action}.",
+                    f"Okay, I’m following.",
+                    f"Right, got you."
+                ]
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        # Example:
+        # "right thats what i meant"
+        if detail in {
+            "thats what i meant",
+            "that's what i meant",
+            "that is what i meant",
+            "thats it",
+            "that's it",
+            "that is it"
+        }:
+            return self.make_result(
+                self.choose_natural_reply([
+                    "Exactly.",
+                    "Yeah, I get you now.",
+                    "Right, we’re on the same page.",
+                    "Mhm, got you."
+                ]),
+                clear_pending=False
+            )
+
+        # General mixed acknowledgement:
+        # acknowledge first, then respond socially to the added detail.
+        self.set_active_proposition(
+            detail
+        )
+
+        if contrast in {
+            "but",
+            "though",
+            "tho"
+        }:
+            replies = [
+                f"Yeah, but {detail}.",
+                f"Right — {detail} changes it a little.",
+                f"Mhm, I get what you mean."
+            ]
+
+        else:
+            replies = [
+                f"Yeah, I get you.",
+                f"Mhm, that makes sense.",
+                f"Right, I’m following."
+            ]
+
+        return self.make_result(
+            self.choose_natural_reply(
+                replies
+            ),
+            clear_pending=False
+        )
+
+    # -------------------------------------------------
     # Person-description statements
     # -------------------------------------------------
 
@@ -1062,15 +1312,62 @@ class Context:
             f"{person_label} being {description}"
         )
 
-        negative_descriptions = {
-            "mean",
-            "annoying",
-            "frustrating",
-            "rude",
-            "unkind",
-            "difficult",
-            "harsh",
-            "upsetting"
+        negative_description_replies = {
+            "frustrating": [
+                "That sounds frustrating.",
+                "Yeah, that would get on my nerves too.",
+                "Ugh, that must’ve been irritating.",
+                f"Ahh, not {person_label} being frustrating 😭"
+            ],
+
+            "annoying": [
+                "That sounds annoying.",
+                "Yeah, I wouldn’t enjoy that either.",
+                "Ugh, that would bother me too.",
+                f"Ahh, not {person_label} being annoying 😭"
+            ],
+
+            "mean": [
+                "That was mean.",
+                "Ahh, that wasn’t kind.",
+                "Yeah, I wouldn’t like being treated like that.",
+                f"Not {person_label} being mean 😭"
+            ],
+
+            "rude": [
+                "That was rude.",
+                "Yeah, that sounds disrespectful.",
+                "Ugh, that kind of behaviour is unpleasant.",
+                f"Ahh, {person_label} was rude?"
+            ],
+
+            "unkind": [
+                "That wasn’t kind.",
+                "Yeah, that sounds hurtful.",
+                "Ahh, I’m sorry they treated you like that.",
+                f"That was unkind of {person_label}."
+            ],
+
+            "harsh": [
+                "That sounds harsh.",
+                "Yeah, that feels a bit much.",
+                "Ahh, they could’ve handled that better.",
+                f"{person_label.capitalize()} was being harsh?"
+            ],
+
+            "upsetting": [
+                "That sounds upsetting.",
+                "Ahh, I’m sorry.",
+                "Yeah, I can see why that affected you.",
+                "That must’ve felt awful."
+            ],
+
+            "difficult": [
+                "That sounds difficult.",
+                "Yeah, that seems hard to deal with.",
+                "Ahh, that would take patience.",
+                f"Dealing with {person_label} sounds difficult."
+            ]
         }
 
         positive_descriptions = {
@@ -1083,16 +1380,16 @@ class Context:
             "patient"
         }
 
-        if description in negative_descriptions:
+        if description in negative_description_replies:
 
-            replies = [
-                f"Ahh, {person_label} was {description}? That doesn’t sound nice.",
-                f"That sounds frustrating. {person_label.capitalize()} was {description}.",
-                f"Ugh, {description} is hard to deal with."
-            ]
+            replies = list(
+                negative_description_replies[
+                    description
+                ]
+            )
 
             if self.should_ask_curiosity(
-                topic=person_label,
+                topic=f"{person_label} {description}",
                 base_chance=0.35
             ):
                 replies.append(
@@ -1100,16 +1397,20 @@ class Context:
                 )
 
             return self.make_result(
-                random.choice(replies),
+                self.choose_natural_reply(
+                    replies
+                ),
                 clear_pending=False
             )
 
         if description in positive_descriptions:
 
             replies = [
-                f"Aw, {person_label} sounds {description}.",
-                f"That’s nice — {description} is a lovely quality.",
-                f"Okay, so {person_label} was {description}."
+                "Aw, that’s sweet.",
+                f"Okay, {description} — I like that.",
+                f"That’s nice of {person_label}.",
+                "Aww.",
+                f"That sounds lovely."
             ]
 
             if self.should_ask_curiosity(
@@ -1121,15 +1422,19 @@ class Context:
                 )
 
             return self.make_result(
-                random.choice(replies),
+                self.choose_natural_reply(
+                    replies
+                ),
                 clear_pending=False
             )
 
         return self.make_result(
-            random.choice([
-                f"Okay, so {person_label} was {description}.",
-                f"Ahh, {person_label} seemed {description}.",
-                f"I’m following — {person_label} was {description}."
+            self.choose_natural_reply([
+                f"Ohh, {description}.",
+                f"Right, I get you.",
+                f"Ahh, okay.",
+                f"That sounds {description}.",
+                f"Mhm."
             ]),
             clear_pending=False
         )
@@ -1247,10 +1552,12 @@ class Context:
             )
 
         return self.make_result(
-            random.choice([
-                f"Okay, so the {subject} was {description}.",
-                f"Ahh, the {subject} felt {description} to you.",
-                f"I get it — you found the {subject} {description}."
+            self.choose_natural_reply([
+                f"Ohh, {description}.",
+                f"Ahh, okay.",
+                f"That sounds {description}.",
+                f"Mhm, I get you.",
+                f"Okayyy."
             ]),
             clear_pending=False
         )
@@ -1315,19 +1622,12 @@ class Context:
                 self.last_nova_question_topic = ""
 
                 return self.make_result(
-                    random.choice([
-                        (
-                            f"Ahh, they like "
-                            f"{interpreted_detail}. That makes sense."
-                        ),
-                        (
-                            f"Ohh, so it’s "
-                            f"{interpreted_detail} they like."
-                        ),
-                        (
-                            f"Okay, I get it — "
-                            f"{interpreted_detail} is what they enjoy."
-                        )
+                    self.choose_natural_reply([
+                        f"Ohh, that makes sense.",
+                        f"Ahh, I get why they like it then.",
+                        f"Okayyy, that actually sounds nice.",
+                        f"The feeling of it — got you.",
+                        f"Yeah, I can see the appeal."
                     ]),
                     clear_pending=False
                 )
@@ -1455,6 +1755,259 @@ class Context:
         return text.startswith(
             starters
         )
+
+    # -------------------------------------------------
+    # Story continuation
+    # -------------------------------------------------
+
+    def handle_story_continuation(
+        self,
+        message,
+        text
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return None
+
+        if str(message).strip().endswith("?"):
+            return None
+
+        # A clear new first-person topic should continue through
+        # normal routing rather than being attached to the old story.
+        new_topic_starters = (
+            "i ",
+            "i'm ",
+            "im ",
+            "i've ",
+            "ive ",
+            "my project ",
+            "my code ",
+            "we ",
+            "we're ",
+            "were "
+        )
+
+        if normalised.startswith(
+            new_topic_starters
+        ):
+            return None
+
+        # -------------------------------------------------
+        # Person descriptions:
+        # "she was strict", "he is funny", "they're tall"
+        # -------------------------------------------------
+
+        person_description_match = re.match(
+            (
+                r"^(she|he|they)"
+                r"(?:'s| is|'re| are| was| were) "
+                r"(?:really |very |quite )?(.+)$"
+            ),
+            normalised
+        )
+
+        if (
+            person_description_match
+            and self.current_person_label
+        ):
+
+            description = person_description_match.group(
+                2
+            ).strip()
+
+            if not description:
+                return None
+
+            self.set_active_proposition(
+                f"{self.person_topic_phrase()} "
+                f"being {description}"
+            )
+
+            tone_replies = {
+                "strict": [
+                    "Ahh, really strict?",
+                    "Okay, that explains the frustration a bit more.",
+                    "Yeah, strict teachers can be a lot.",
+                    "Mhm, I’m following."
+                ],
+                "tall": [
+                    "Ohh, she’s tall too.",
+                    "Okay, I’m picturing her a little better now.",
+                    "Right, got you.",
+                    "Mhm."
+                ],
+                "kind": [
+                    "Aw, she sounds kind.",
+                    "That’s nice.",
+                    "Okay, I like that.",
+                    "Aww."
+                ],
+                "funny": [
+                    "Ohh, she’s funny too 😭",
+                    "Okay, I can see why you like her.",
+                    "That makes the story better.",
+                    "Right 😭"
+                ],
+                "mean": [
+                    "Ahh, that wasn’t kind.",
+                    "Yeah, that sounds hurtful.",
+                    "Not her being mean too 😭",
+                    "Mhm, I get you."
+                ],
+                "annoying": [
+                    "Yeah, that sounds annoying.",
+                    "Ugh, I get why that bothered you.",
+                    "Right, that would get on my nerves.",
+                    "Mhm."
+                ]
+            }
+
+            replies = tone_replies.get(
+                description,
+                [
+                    f"Ohh, {description}.",
+                    "Okay, I’m following.",
+                    "Right, got you.",
+                    "Mhm."
+                ]
+            )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        # -------------------------------------------------
+        # Person actions:
+        # "then she apologised", "after that they left"
+        # -------------------------------------------------
+
+        person_action_match = re.match(
+            (
+                r"^(?:(then|after that|later|but|and) )?"
+                r"(she|he|they) (.+)$"
+            ),
+            normalised
+        )
+
+        if (
+            person_action_match
+            and self.current_person_label
+        ):
+
+            connector = (
+                person_action_match.group(1)
+                or ""
+            ).strip()
+
+            action = person_action_match.group(
+                3
+            ).strip()
+
+            if not action:
+                return None
+
+            self.set_active_proposition(
+                f"{self.person_topic_phrase()} "
+                f"{action}"
+            )
+
+            if connector == "but":
+                replies = [
+                    "Ohh, okay — that changes it a little.",
+                    "Right, so there was another side to it.",
+                    "Ahh, but then that happened.",
+                    "Okay, I’m following."
+                ]
+
+            elif connector in {
+                "then",
+                "after that",
+                "later"
+            }:
+                replies = [
+                    "Ohh, and then?",
+                    "Okay, I’m following.",
+                    "Right, so that happened next.",
+                    "Mhm."
+                ]
+
+            else:
+                replies = [
+                    "Ohh, okay.",
+                    "Right, I’m following.",
+                    "Mhm, got you.",
+                    "Ahh."
+                ]
+
+            # Curiosity remains optional.
+            if self.should_ask_curiosity(
+                topic=f"{self.person_topic_phrase()} {action}",
+                base_chance=0.20
+            ):
+                replies.append(
+                    "What happened after that?"
+                )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        # -------------------------------------------------
+        # Story sequence without an explicit person:
+        # "then we left", "after that it started raining"
+        # -------------------------------------------------
+
+        sequence_match = re.match(
+            r"^(then|after that|later|eventually) (.+)$",
+            normalised
+        )
+
+        if sequence_match and self.active_proposition:
+
+            event = sequence_match.group(
+                2
+            ).strip()
+
+            if not event:
+                return None
+
+            self.set_active_proposition(
+                event
+            )
+
+            replies = [
+                "Okay, I’m following.",
+                "Right, and then that happened.",
+                "Mhm, what a day.",
+                "Ahh, got you."
+            ]
+
+            if self.should_ask_curiosity(
+                topic=event,
+                base_chance=0.22
+            ):
+                replies.append(
+                    "What happened next?"
+                )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        return None
 
     def handle_generic_continuation(
         self,
@@ -1753,20 +2306,11 @@ class Context:
         )
 
         replies = [
-            (
-                f"Ooo, so you're changing "
-                f"{interpreted_answer} in "
-                f"{self.current_project}."
-            ),
-            (
-                f"Ahh, you're working on "
-                f"{interpreted_answer}. "
-                "That sounds like an important part."
-            ),
-            (
-                f"Okay, I get it — this part is about "
-                f"{interpreted_answer}."
-            )
+            f"Ohh, {interpreted_answer}.",
+            f"Ahh, so that’s the bit you’re changing.",
+            f"Okayyy, that makes more sense.",
+            f"Got you — {interpreted_answer}.",
+            f"Ooo, that part."
         ]
 
         if self.should_ask_curiosity(
@@ -1787,7 +2331,9 @@ class Context:
             ])
 
         return self.make_result(
-            random.choice(replies),
+            self.choose_natural_reply(
+                replies
+            ),
             clear_pending=False
         )
 
@@ -2094,6 +2640,42 @@ class Context:
         else:
             self.consecutive_nova_questions = 0
             self.turns_since_nova_question += 1
+
+    def choose_natural_reply(
+        self,
+        replies
+    ):
+
+        options = [
+            str(reply).strip()
+            for reply in replies
+            if str(reply).strip()
+        ]
+
+        if not options:
+            return ""
+
+        unused = [
+            reply
+            for reply in options
+            if reply not in self.recent_natural_replies
+        ]
+
+        pool = unused or options
+
+        chosen = random.choice(
+            pool
+        )
+
+        self.recent_natural_replies.append(
+            chosen
+        )
+
+        self.recent_natural_replies = (
+            self.recent_natural_replies[-6:]
+        )
+
+        return chosen
 
     def should_ask_curiosity(
         self,

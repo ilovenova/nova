@@ -74,9 +74,13 @@ class LanguageAdapter:
             "youre": "you're",
             "youve": "you've",
             "youll": "you'll",
+            "shes": "she's",
+            "hes": "he's",
             "theyre": "they're",
             "theyve": "they've",
-            "weve": "we've"
+            "theyll": "they'll",
+            "weve": "we've",
+            "whos": "who's"
         }
 
         self.user_phrase_path = Path(
