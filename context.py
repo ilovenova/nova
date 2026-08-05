@@ -2357,7 +2357,12 @@ class Context:
             "second": 1,
             "second one": 1,
             "the second one": 1,
-            "second person": 1
+            "second person": 1,
+            "last": max(0, len(options) - 1),
+            "the last one": max(0, len(options) - 1),
+            "last one": max(0, len(options) - 1),
+            "the other one": 1 if len(options) > 1 else 0,
+            "the other person": 1 if len(options) > 1 else 0
         }
 
         for phrase, index in selectors.items():
@@ -2732,7 +2737,7 @@ class Context:
         # -------------------------------------------------
 
         sequence_match = re.match(
-            r"^(then|after that|later|eventually) (.+)$",
+            r"^(then|after that|later|eventually|and then) (.+)$",
             normalised
         )
 
@@ -3398,6 +3403,42 @@ class Context:
                 action=action,
                 detail=action
             )
+
+            return self.make_result(
+                self.choose_natural_reply(
+                    replies
+                ),
+                clear_pending=False
+            )
+
+        new_experience_match = re.match(
+            r"^i (got|had|received|found|picked up) (.+)$",
+            normalised
+        )
+
+        if new_experience_match:
+
+            action = new_experience_match.group(1).strip()
+            detail = new_experience_match.group(2).strip()
+
+            self.set_active_proposition(
+                f"you {action} {detail}"
+            )
+
+            replies = [
+                f"Ooo, you {action} {detail}.",
+                "Okayyy, I’m following.",
+                "Mhm, got you.",
+                f"That sounds like {detail}."
+            ]
+
+            if self.should_ask_curiosity(
+                topic=detail,
+                base_chance=0.28
+            ):
+                replies.append(
+                    f"What was that like?"
+                )
 
             return self.make_result(
                 self.choose_natural_reply(
