@@ -691,6 +691,17 @@ class Context:
                         clear_pending=True
                     )
 
+            if kind == "reference_selection":
+
+                result = self.answer_reference_selection(
+                    message,
+                    text,
+                    pending_follow_up
+                )
+
+                if result:
+                    return result
+
             if kind == "social":
 
                 if social.should_use_follow_up(
@@ -2110,7 +2121,14 @@ class Context:
                         f"or {second_person}?"
                     )
                 ]),
-                clear_pending=False
+                clear_pending=False,
+                next_follow_up={
+                    "kind": "reference_selection",
+                    "options": [
+                        first_person,
+                        second_person
+                    ]
+                }
             )
 
         # Example:
@@ -2269,6 +2287,109 @@ class Context:
                     ),
                     clear_pending=False
                 )
+
+        return None
+
+    def answer_reference_selection(
+        self,
+        message,
+        text,
+        follow_up
+    ):
+
+        normalised = self.normalise_control_text(
+            text
+        )
+
+        if not normalised:
+            return None
+
+        options = (
+            follow_up.get(
+                "options",
+                []
+            )
+        )
+
+        if not options:
+            return None
+
+        resolved = self.resolve_reference_selection(
+            normalised,
+            options
+        )
+
+        if not resolved:
+            return None
+
+        self.ambiguous_people = [resolved]
+
+        if resolved.startswith("your "):
+            self.current_person_label = resolved
+
+        self.last_active_topic = resolved
+        self.set_active_proposition(resolved)
+        self.last_question_shape = ""
+        self.last_question_subject = ""
+        self.last_nova_question = ""
+        self.last_nova_question_topic = ""
+
+        return self.make_result(
+            random.choice([
+                f"Okay — it was {resolved}.",
+                f"Right, {resolved} was the one.",
+                f"Got it. {resolved} it is."
+            ]),
+            clear_pending=True
+        )
+
+    def resolve_reference_selection(
+        self,
+        normalised,
+        options
+    ):
+
+        selectors = {
+            "first": 0,
+            "first one": 0,
+            "the first one": 0,
+            "first person": 0,
+            "second": 1,
+            "second one": 1,
+            "the second one": 1,
+            "second person": 1
+        }
+
+        for phrase, index in selectors.items():
+
+            if normalised == phrase:
+                if index < len(options):
+                    return options[index]
+
+        for index, option in enumerate(options):
+
+            simple = option
+
+            if simple.startswith("your "):
+                simple = simple[len("your "):]
+
+            alias = option
+            if alias.startswith("your "):
+                alias = "my " + alias[len("your "):]
+
+            if normalised in {
+                option,
+                alias,
+                simple
+            }:
+                return option
+
+            if simple and (
+                normalised == f"my {simple}"
+                or normalised == f"your {simple}"
+                or simple in normalised
+            ):
+                return option
 
         return None
 
